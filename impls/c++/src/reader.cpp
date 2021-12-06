@@ -1,5 +1,6 @@
 #include "reader.h"
 #include "exception.h"
+#include "types.h"
 #include <memory>
 #include <regex>
 #include <stdexcept>
@@ -106,7 +107,16 @@ mal::Type::Ptr Reader::read_atom() {
     if (token.size() < 2 || token[token.size() - 1] != '"') {
       throw mal::ReaderException("EOF before string ends. " + token);
     }
-    std::make_shared<mal::String>(readably(token.substr(1, token.size() - 2)));
+    return std::make_shared<mal::String>(readably(token.substr(1, token.size() - 2)));
+  }
+  if (token == "true") {
+    return std::make_shared<mal::True>();
+  }
+  if (token == "false") {
+    return std::make_shared<mal::False>();
+  }
+  if (token == "nil") {
+    return std::make_shared<mal::Nil>();
   }
   return std::make_shared<mal::Symbol>(token);
 }

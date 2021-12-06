@@ -34,7 +34,7 @@ wasm_MODE = wasmtime
 # Implementation specific settings
 #
 
-IMPLS = ada ada.2 awk bash basic bbc-basic c c.2 chuck clojure coffee common-lisp cpp crystal cs d dart \
+IMPLS = myjulia c++ ada ada.2 awk bash basic bbc-basic c c.2 chuck clojure coffee common-lisp cpp crystal cs d dart \
 	elisp elixir elm erlang es6 factor fantom fennel forth fsharp go groovy gnu-smalltalk \
 	guile haskell haxe hy io janet java java-truffle js jq julia kotlin livescript logo lua make mal \
 	matlab miniMAL nasm nim objc objpascal ocaml perl perl6 php picolisp pike plpgsql \
@@ -117,6 +117,7 @@ clojure_STEP_TO_PROG =       $(clojure_STEP_TO_PROG_$(clojure_MODE))
 coffee_STEP_TO_PROG =        impls/coffee/$($(1)).coffee
 common-lisp_STEP_TO_PROG =   impls/common-lisp/$($(1))
 cpp_STEP_TO_PROG =           impls/cpp/$($(1))
+c++_STEP_TO_PROG =           impls/c++/$($(1))
 crystal_STEP_TO_PROG =       impls/crystal/$($(1))
 cs_STEP_TO_PROG =            impls/cs/$($(1)).exe
 d_STEP_TO_PROG =             impls/d/$($(1))
@@ -145,6 +146,7 @@ java-truffle_STEP_TO_PROG =  impls/java-truffle/build/classes/java/main/truffle/
 js_STEP_TO_PROG =            impls/js/$($(1)).js
 jq_STEP_PROG =               impls/jq/$($(1)).jq
 julia_STEP_TO_PROG =         impls/julia/$($(1)).jl
+myjulia_STEP_TO_PROG =       impls/myjulia/$($(1)).jl
 kotlin_STEP_TO_PROG =        impls/kotlin/$($(1)).jar
 livescript_STEP_TO_PROG =    impls/livescript/$($(1)).js
 logo_STEP_TO_PROG =          impls/logo/$($(1)).lg
