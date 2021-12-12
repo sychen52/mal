@@ -2,6 +2,7 @@
 #include "printer.h"
 #include "reader.h"
 #include "types.h"
+#include "core.h"
 #include <iostream>
 #include <memory>
 #include <stdexcept>
@@ -11,7 +12,7 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env);
 
 bool is_form(const mal::List* list, const std::string& key) {
   auto first = dynamic_cast<mal::Symbol*>((*list)[0].get());
-  if (first == nullptr || first->name != "def!") {
+  if (first == nullptr || first->name != key) {
     return false;
   }
   return true;
@@ -80,11 +81,10 @@ mal::Type::Ptr if_form(const mal::List *list, mal::Env& env) {
   if (!is_form(list, "if")) {
     return nullptr;
   }
-  if (list->size() == 4) {
+  if (list->size() != 4) {
     throw mal::Exception("if must be a length 4 list. Got " +
                          std::to_string(list->size()));
   }
-
   auto condiction = EVAL((*list)[1], env);
   if (dynamic_cast<mal::Nil*>(condiction.get()) == nullptr &&
       dynamic_cast<mal::False*>(condiction.get()) == nullptr) {
@@ -93,8 +93,19 @@ mal::Type::Ptr if_form(const mal::List *list, mal::Env& env) {
   return EVAL((*list)[3], env);
 }
 
+mal::Type::Ptr fn_star(const mal::List* list, mal::Env& env) {
+  if (!is_form(list, "fn*")) {
+    return nullptr;
+  }
+  if (list->size() != 3) {
+    throw mal::Exception("if must be a length 3 list. Got " +
+                         std::to_string(list->size()));
+  }
+  return std::make_shared<mal::Function>((*list)[1], (*list)[2], &env);
+}
+
 mal::Type::Ptr apply(const mal::List *ret_list_ptr, mal::Env& env) {
-  auto func_ptr = dynamic_cast<mal::BuiltinFunction *>((*ret_list_ptr)[0].get());
+  auto func_ptr = dynamic_cast<mal::Callable *>((*ret_list_ptr)[0].get());
   if (func_ptr == nullptr) {
     throw mal::Exception("First element is not a function");
   }
@@ -105,6 +116,7 @@ mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::Env &env) {
   // symbol
   auto symbol_ptr = dynamic_cast<const mal::Symbol *>(ast.get());
   if (symbol_ptr != nullptr) {
+    // this is the whole point of using shared_ptr! Otherwise, unique_ptr is enough.
     return env.get(*symbol_ptr);
   }
 
@@ -154,6 +166,12 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env) {
     return ret_if;
   }
 
+  // fn
+  auto fn_if = fn_star(list_ptr, env);
+  if (fn_if != nullptr) {
+    return fn_if;
+  }
+
   // apply section
   auto ret = eval_ast(ast, env);
   auto ret_list_ptr = dynamic_cast<mal::List *>(ret.get());
@@ -167,6 +185,10 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env) {
   return apply(ret_list_ptr, env);
 }
 
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env&& env) {
+  return EVAL(ast, env);
+}
+
 std::string PRINT(mal::Type::Ptr input) { return pr_str(*input); }
 
 std::string rep(const std::string& input, mal::Env& env) {
@@ -175,11 +197,7 @@ std::string rep(const std::string& input, mal::Env& env) {
 
 int main() {
   std::string input;
-  auto repl_env = mal::Env();
-  repl_env.set(mal::Symbol("+"), std::make_shared<mal::Add>());
-  repl_env.set(mal::Symbol("-"), std::make_shared<mal::Minus>());
-  repl_env.set(mal::Symbol("*"), std::make_shared<mal::Multiply>());
-  repl_env.set(mal::Symbol("/"), std::make_shared<mal::Divide>());
+  auto repl_env = mal::build_env();
 
   std::string prompt = "user> ";
   std::cout << prompt;
@@ -187,7 +205,8 @@ int main() {
     try {
       auto output = rep(input, repl_env);
       std::cout << output << std::endl;
-    } catch (const mal::Exception &e) {
+    }
+    catch (const mal::Exception &e) {
       std::cout << e.what() << std::endl;
     }
     std::cout << prompt;

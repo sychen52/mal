@@ -73,8 +73,13 @@ namespace mal {
     std::string to_string() const { return "nil"; }
   };
 
-  class Function: public Type {
+  class Callable : public Type {
   public:
-    std::string to_string() const { return "#<function>"; }
+    using Ptr = std::shared_ptr<Callable>;
+    virtual Type::Ptr call(const std::vector<Type::Ptr>::const_iterator &start,
+                           const std::vector<Type::Ptr>::const_iterator &end) = 0;
+    virtual std::string to_string() const override {
+      return "this is a function";
+    }
   };
 } // namespace mal
