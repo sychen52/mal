@@ -1,4 +1,5 @@
 #pragma once
+#include "exception.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -10,76 +11,114 @@ namespace mal {
     virtual std::string to_string() const = 0;
   };
 
-  class Number : public Type {
+  template<class T>
+  class TypeTemplate:public Type {
+  public:
+    TypeTemplate() {}
+    TypeTemplate(const T& value):value_(value) {}
+    inline const T& value() const {return value_;}
+  protected:
+    T value_;
+  };
+
+  class Number : public TypeTemplate<int64_t> {
   public:
     using Ptr = std::shared_ptr<Number>;
-    Number(const int64_t number) : number(number) {}
-    virtual std::string to_string() const override {
-      return std::to_string(number);
+    using NumberType = int64_t;
+    Number(const int64_t number) : TypeTemplate(number) {}
+    inline virtual std::string to_string() const override {
+      return std::to_string(value());
     }
-    int64_t number;
+    bool operator==(const Type& rhs) const {
+      auto other = dynamic_cast<const Number*>(&rhs);
+      if (other == nullptr) {
+        return false;
+      }
+      return value() == other->value();
+    }
   };
 
-  class Symbol : public Type {
+  class Symbol : public TypeTemplate<std::string> {
   public:
     using Ptr = std::shared_ptr<Symbol>;
-    Symbol(const std::string &exp) : name(exp) {}
-    virtual std::string to_string() const override { return name; }
-    std::string name;
+    Symbol(const std::string &exp) : TypeTemplate(exp) {}
+    virtual std::string to_string() const override { return value(); }
+    bool operator==(const Type& rhs) const {
+      auto other = dynamic_cast<const Symbol*>(&rhs);
+      if (other == nullptr) {
+        return false;
+      }
+      return value() == other->value();
+    }
   };
 
-  class String : public Type {
+  class String : public TypeTemplate<std::string> {
   public:
-    String(const std::string &exp) : str_(exp.substr(0, exp.size() - 2)) {}
-    virtual std::string to_string() const override { return "\"" + str_ + "\""; }
-
-  private:
-    std::string str_;
+    String(const std::string &exp) : TypeTemplate(exp.substr(0, exp.size() - 2)) {}
+    virtual std::string to_string() const override { return "\"" + value() + "\""; }
   };
 
-  class List : public Type {
+  class ParameterIter;
+
+  class List : public TypeTemplate<std::vector<Type::Ptr>> {
   public:
     using Ptr = std::shared_ptr<List>;
-    inline void append(Type::Ptr exp) { list_.emplace_back(std::move(exp)); }
+    using Iter = std::vector<Type::Ptr>::const_iterator;
+    inline void append(Type::Ptr exp) { value_.emplace_back(std::move(exp)); }
     virtual std::string to_string() const override;
-    inline auto empty() const { return list_.empty(); }
-    inline auto size() const { return list_.size(); }
-    inline Type::Ptr operator[](const size_t i) const { return list_[i]; }
+    inline auto empty() const { return value_.empty(); }
+    inline auto size() const { return value_.size(); }
+    inline Type::Ptr operator[](const size_t i) const { return value_[i]; }
     // inline std::vector<Type::Ptr>::iterator begin() { return list_.begin(); }
     // inline std::vector<Type::Ptr>::iterator end() { return list_.end(); }
-    inline std::vector<Type::Ptr>::const_iterator begin() const {
-      return list_.begin();
+    inline Iter begin() const {return value_.begin();}
+    inline Iter end() const {return value_.end();}
+    ParameterIter parameter_iter() const;
+  };
+
+  class ParameterIter {
+  public:
+    ParameterIter(const List::Iter &start, const List::Iter &end,
+                         const std::string &fn);
+    template<typename T>
+    T* pop() {
+      auto ptr = pop();
+      T* t = dynamic_cast<T*>(ptr.get());
+      if (t == nullptr) {
+        throw Exception("Wrong argument type for " + fn_ + ": " + typeid(T).name());
+      }
+      return t;
     }
-    inline std::vector<Type::Ptr>::const_iterator end() const {
-      return list_.end();
-    }
+    Type::Ptr pop();
+    void next();
+    void no_extra() const;
+    inline bool is_done() const { return it_ == end_; };
 
   private:
-    std::vector<Type::Ptr> list_;
+    size_t n_ = 0;
+    List::Iter it_;
+    const List::Iter end_;
+    const std::string fn_;
   };
 
-  class True: public Type {
-  public:
-    std::string to_string() const { return "true"; }
+  class Boolean: public TypeTemplate<bool> {
+    public:
+    Boolean(const bool value): TypeTemplate(value) {}
+    std::string to_string() const { return std::to_string(value()); }
   };
 
-  class False: public Type {
-  public:
-    std::string to_string() const { return "false"; }
-  };
-
-  class Nil: public Type {
+  class Nil: public TypeTemplate<void*> {
   public:
     std::string to_string() const { return "nil"; }
   };
 
-  class Callable : public Type {
+  class Callable : public TypeTemplate<void*> {
   public:
     using Ptr = std::shared_ptr<Callable>;
-    virtual Type::Ptr call(const std::vector<Type::Ptr>::const_iterator &start,
-                           const std::vector<Type::Ptr>::const_iterator &end) = 0;
+    virtual Type::Ptr call(ParameterIter& it) = 0;
+    virtual Type::Ptr call(ParameterIter&& it) {return call(it);};
     virtual std::string to_string() const override {
-      return "this is a function";
+      return "this is a Callable";
     }
   };
 } // namespace mal

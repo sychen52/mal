@@ -14,7 +14,7 @@ project(Mal VERSION 1.0)
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-add_library(lib SHARED reader.cpp types.cpp env.cpp)
+add_library(lib SHARED reader.cpp types.cpp env.cpp core.cpp)
 #add_executable(step1_read_print step1_read_print.cpp)
 #target_link_libraries(step1_read_print lib)
 #set(OUTPUT_EXE step2_eval)

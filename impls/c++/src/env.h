@@ -1,7 +1,6 @@
 #pragma once
 #include "exception.h"
 #include "types.h"
-#include "core.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -15,12 +14,11 @@ namespace mal {
 
     Env(const Env* outer = nullptr): outer_(outer) {}
     Env(const Env *outer, const std::vector<std::string> &binds,
-        const std::vector<Type::Ptr>::const_iterator &start,
-        const std::vector<Type::Ptr>::const_iterator &end);
+        ParameterIter& it);
 
     Type::Ptr get(const Symbol &symbol) const;
 
-    inline void set(const Symbol& key, Type::Ptr val) {data_[key.name] = val;}
+    inline void set(const Symbol& key, Type::Ptr val) {data_[key.value()] = val;}
 
     const Env *find(const Symbol &key) const;
 
@@ -32,8 +30,7 @@ namespace mal {
   class Function : public Callable {
   public:
     Function(const Type::Ptr binds, const Type::Ptr ast, const Env *env);
-    Type::Ptr call(const std::vector<Type::Ptr>::const_iterator &start,
-                   const std::vector<Type::Ptr>::const_iterator &end) override;
+    Type::Ptr call(ParameterIter&) override;
     inline std::string to_string() const override { return "#<function>"; }
   private:
     std::vector<std::string> binds_;

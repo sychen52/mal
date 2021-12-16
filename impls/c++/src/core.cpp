@@ -1,82 +1,176 @@
 #include "core.h"
 #include "exception.h"
+#include "types.h"
+#include <iostream>
+#include <tuple>
+#include <utility>
 
-mal::Type::Ptr
-mal::Add::call(const std::vector<Type::Ptr>::const_iterator &start,
-               const std::vector<Type::Ptr>::const_iterator &end) {
-  int64_t ret = 0;
-  for (auto it = start; it != end; ++it) {
-    auto ptr = dynamic_cast<Number *>((*it).get());
-    if (ptr == nullptr) {
-      throw Exception("All arguments are supposed be Number's");
+namespace mal{
+  Type::Ptr Add::call(ParameterIter& it) {
+    int64_t ret = 0;
+    while (!it.is_done()) {
+      auto ptr = it.pop<Number>();
+      ret += ptr->value();
     }
-    ret += ptr->number;
+    return std::make_shared<Number>(ret);
   }
-  return std::make_shared<Number>(ret);
-}
 
-mal::Type::Ptr
-mal::Multiply::call(const std::vector<Type::Ptr>::const_iterator &start,
-                    const std::vector<Type::Ptr>::const_iterator &end) {
-  int64_t ret = 1;
-  for (auto it = start; it != end; ++it) {
-    auto ptr = dynamic_cast<Number *>((*it).get());
-    if (ptr == nullptr) {
-      throw Exception("All arguments are supposed be Number's");
+  Type::Ptr Multiply::call(ParameterIter& it) {
+    int64_t ret = 1;
+    while (!it.is_done()) {
+      auto ptr = it.pop<Number>();
+      ret *= ptr->value();
     }
-    ret *= ptr->number;
+    return std::make_shared<Number>(ret);
   }
-  return std::make_shared<Number>(ret);
-}
 
-mal::Type::Ptr
-mal::Minus::call(const std::vector<Type::Ptr>::const_iterator &start,
-                 const std::vector<Type::Ptr>::const_iterator &end) {
-  int64_t ret = 0;
-  bool only_one_arg = false;
-  if (start + 1 == end) {
-    only_one_arg = true;
-  }
-  for (auto it = start; it != end; ++it) {
-    auto ptr = dynamic_cast<Number *>((*it).get());
-    if (ptr == nullptr) {
-      throw Exception("All arguments are supposed be Number's");
+  Type::Ptr Minus::call(ParameterIter& it) {
+    int64_t ret = 0;
+    bool first_arg = true;
+    while (!it.is_done()) {
+      auto ptr =it.pop<Number>();
+      if (first_arg && !it.is_done()) {
+        ret += ptr->value();
+      } else {
+        ret -= ptr->value();
+      }
+      first_arg = false;
     }
-    if (it == start && !only_one_arg) {
-      ret += ptr->number;
-    } else {
-      ret -= ptr->number;
-    }
+    return std::make_shared<Number>(ret);
   }
-  return std::make_shared<Number>(ret);
-}
 
-mal::Type::Ptr
-mal::Divide::call(const std::vector<Type::Ptr>::const_iterator &start,
-                  const std::vector<Type::Ptr>::const_iterator &end) {
-  int64_t ret = 1;
-  bool only_one_arg = false;
-  if (start + 1 == end) {
-    only_one_arg = true;
-  }
-  for (auto it = start; it != end; ++it) {
-    auto ptr = dynamic_cast<Number *>((*it).get());
-    if (ptr == nullptr) {
-      throw Exception("All arguments are supposed be Number's");
+  Type::Ptr Divide::call(ParameterIter& it) {
+    int64_t ret = 1;
+    bool first_arg = true;
+    while (!it.is_done()) {
+      auto ptr =it.pop<Number>();
+      if (first_arg && !it.is_done()) {
+        ret *= ptr->value();
+      } else {
+        ret /= ptr->value();
+      }
     }
-    if (it == start && !only_one_arg) {
-      ret *= ptr->number;
-    } else {
-      ret /= ptr->number;
+    return std::make_shared<Number>(ret);
+  }
+
+  Type::Ptr Prn::call(ParameterIter& it) {
+    while (!it.is_done()) {
+      std::cout<< it.pop()->to_string() <<std::endl;
+    }
+    return std::make_shared<Nil>();
+  }
+
+  Type::Ptr ListFunction::call(ParameterIter& it) {
+    auto ret = std::make_shared<List>();
+    while (!it.is_done()) {
+      ret->append(it.pop());
+    }
+    return ret;
+  }
+
+  Type::Ptr ListPredicate::call(ParameterIter& it) {
+    if (it.is_done()) {
+      return std::make_shared<Boolean>(false);
+    }
+    return std::make_shared<Boolean>(it.pop<List>() != nullptr);
+  }
+
+  Type::Ptr EmptyPredicate::call(ParameterIter& it) {
+    auto list = it.pop<List>();
+    return std::make_shared<Boolean>(list->size() == 0);
+    it.no_extra();
+  }
+
+  Type::Ptr Count::call(ParameterIter& it) {
+    auto list = it.pop<List>();
+    return std::make_shared<Number>(list->size());
+    it.no_extra();
+  }
+
+  template<typename FuncType>
+  Type::Ptr compare_two_numbers(ParameterIter& it,
+                                const FuncType& func) {
+    auto first = it.pop<Number>();
+    auto second = it.pop<Number>();
+    it.no_extra();
+    return std::make_shared<Boolean>(func(first->value(), second->value()));
+  }
+
+  bool equal(const Type::Ptr& first, const Type::Ptr second) {
+    if (typeid(first) != typeid(second)) {
+      return false;
+    }
+    auto first_list = dynamic_cast<List*>(first.get());
+    auto second_list = dynamic_cast<List*>(second.get());
+    if (first_list != nullptr) {
+      if (first_list->size() != second_list->size()) {
+        return false;
+      }
+      for (size_t i = 0; i < first_list->size(); ++i) {
+        if (!equal((*first_list)[0], (*second_list)[0])) {
+          return false;
+        }
+      }
+      return true;
+    }
+    else {
+      return true;//first->value() == second->value();
     }
   }
-  return std::make_shared<Number>(ret);
-}
-mal::Env mal::build_env() {
-  auto repl_env = mal::Env();
-  repl_env.set(mal::Symbol("+"), std::make_shared<mal::Add>());
-  repl_env.set(mal::Symbol("-"), std::make_shared<mal::Minus>());
-  repl_env.set(mal::Symbol("*"), std::make_shared<mal::Multiply>());
-  repl_env.set(mal::Symbol("/"), std::make_shared<mal::Divide>());
-  return repl_env;
-}
+
+  Type::Ptr Equal::call(ParameterIter& it) {
+    auto first = it.pop();
+    auto second = it.pop();
+    it.no_extra();
+    return std::make_shared<Boolean>(equal(first, second));
+  }
+
+  Type::Ptr Less::call(ParameterIter& it) {
+    return compare_two_numbers(it,
+                               [](const Number::NumberType& lhs,
+                                  const Number::NumberType& rhs){
+                                 return lhs<rhs;});
+  }
+
+  Type::Ptr LessEqual::call(ParameterIter& it) {
+    return compare_two_numbers(it,
+                               [](const Number::NumberType& lhs,
+                                  const Number::NumberType& rhs){
+                                 return lhs<=rhs;});
+  }
+
+  Type::Ptr Larger::call(ParameterIter& it) {
+    return compare_two_numbers(it,
+                               [](const Number::NumberType& lhs,
+                                  const Number::NumberType& rhs){
+                                 return lhs>rhs;});
+  }
+
+  Type::Ptr LargerEqual::call(ParameterIter& it) {
+    return compare_two_numbers(it,
+                               [](const Number::NumberType& lhs,
+                                  const Number::NumberType& rhs){
+                                 return lhs>=rhs;});
+  }
+
+  Env build_env() {
+    auto repl_env = Env();
+    repl_env.set(Symbol("+"), std::make_shared<Add>());
+    repl_env.set(Symbol("-"), std::make_shared<Minus>());
+    repl_env.set(Symbol("*"), std::make_shared<Multiply>());
+    repl_env.set(Symbol("/"), std::make_shared<Divide>());
+    repl_env.set(Symbol("prn"), std::make_shared<Prn>());
+    repl_env.set(Symbol("list"), std::make_shared<ListFunction>());
+    repl_env.set(Symbol("list?"), std::make_shared<ListPredicate>());
+    repl_env.set(Symbol("empty?"), std::make_shared<EmptyPredicate>());
+    repl_env.set(Symbol("count"), std::make_shared<Count>());
+    repl_env.set(Symbol("="), std::make_shared<Equal>());
+    repl_env.set(Symbol("<"), std::make_shared<Less>());
+    repl_env.set(Symbol("<="), std::make_shared<LessEqual>());
+    repl_env.set(Symbol(">"), std::make_shared<Larger>());
+    repl_env.set(Symbol(">="), std::make_shared<LargerEqual>());
+    return repl_env;
+  }
+
+
+} // namespace mal

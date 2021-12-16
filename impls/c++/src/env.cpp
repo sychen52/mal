@@ -1,4 +1,5 @@
 #include "env.h"
+#include "types.h"
 #include <unordered_map>
 #include <string>
 
@@ -7,31 +8,23 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env&& env);
 
 
 mal::Env::Env(const Env *outer, const std::vector<std::string> &binds,
-              const std::vector<Type::Ptr>::const_iterator &start,
-              const std::vector<Type::Ptr>::const_iterator &end)
-    : outer_(outer) {
-  auto it = start;
+              ParameterIter& it)
+  : outer_(outer) {
   for (const auto &key : binds) {
-    if (it == end) {
-      throw Exception("number of exprs less than number of binds");
-    }
-    data_[key] = *it;
-    ++it;
+    data_[key] = it.pop();
   }
-  if (it != end) {
-    throw Exception("number of exprs more than number of binds");
-  }
+  it.no_extra();
 }
 
 mal::Type::Ptr mal::Env::get(const Symbol &symbol) const {
   auto env = find(symbol);
   if (env == nullptr) {
-    throw Exception(symbol.name + " not found.");
+    throw Exception(symbol.value() + " not found.");
   }
-  return env->data_.at(symbol.name);
+  return env->data_.at(symbol.value());
 }
 const mal::Env *mal::Env::find(const Symbol &key) const {
-  auto it = data_.find(key.name);
+  auto it = data_.find(key.value());
   if (it == data_.end()) {
     if (outer_ == nullptr) {
       return nullptr;
@@ -56,15 +49,14 @@ mal::Function::Function(const Type::Ptr binds, const Type::Ptr ast,
           "fn*'s first argument must be list of symbols. This is not: " +
           (*binds_ptr)[i]->to_string());
     }
-    binds_.push_back(symbol->name);
+    binds_.push_back(symbol->value());
   }
 }
 
 mal::Type::Ptr
-mal::Function::call(const std::vector<Type::Ptr>::const_iterator &start,
-                    const std::vector<Type::Ptr>::const_iterator &end) {
+mal::Function::call(ParameterIter& it) {
   // This is the ealiest place to check the number of exprs equals to number of
   // binds. I did this in Env constructor. Checking of the validity of binds are
   // during Functions constructor
-  return EVAL(ast_, Env(env_, binds_, start, end));
+  return EVAL(ast_, Env(env_, binds_, it));
 }

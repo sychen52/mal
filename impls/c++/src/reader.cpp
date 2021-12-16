@@ -110,10 +110,10 @@ mal::Type::Ptr Reader::read_atom() {
     return std::make_shared<mal::String>(readably(token.substr(1, token.size() - 2)));
   }
   if (token == "true") {
-    return std::make_shared<mal::True>();
+    return std::make_shared<mal::Boolean>(true);
   }
   if (token == "false") {
-    return std::make_shared<mal::False>();
+    return std::make_shared<mal::Boolean>(false);
   }
   if (token == "nil") {
     return std::make_shared<mal::Nil>();

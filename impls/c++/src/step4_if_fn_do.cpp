@@ -12,16 +12,13 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env);
 
 bool is_form(const mal::List* list, const std::string& key) {
   auto first = dynamic_cast<mal::Symbol*>((*list)[0].get());
-  if (first == nullptr || first->name != key) {
+  if (first == nullptr || first->value() != key) {
     return false;
   }
   return true;
 }
 
 mal::Type::Ptr def_bang(const mal::List *list, mal::Env& env) {
-  if (!is_form(list, "def!")) {
-    return nullptr;
-  }
   if (list->size() != 3) {
     throw mal::Exception("def! must be a length 3 list. Got " +
                          std::to_string(list->size()));
@@ -36,9 +33,6 @@ mal::Type::Ptr def_bang(const mal::List *list, mal::Env& env) {
 }
 
 mal::Type::Ptr let_star(const mal::List *list, mal::Env& env) {
-  if (!is_form(list, "let*")) {
-    return nullptr;
-  }
   if (list->size() != 3) {
     throw mal::Exception("let* must be a length 3 list. Got " +
                          std::to_string(list->size()));
@@ -63,9 +57,6 @@ mal::Type::Ptr let_star(const mal::List *list, mal::Env& env) {
 }
 
 mal::Type::Ptr do_form(const mal::List *list, mal::Env& env) {
-  if (!is_form(list, "do")) {
-    return nullptr;
-  }
   if (list->size() <= 1) {
     throw mal::Exception("do must have at least 1 argument. Got " +
                          std::to_string(list->size()-1));
@@ -78,25 +69,21 @@ mal::Type::Ptr do_form(const mal::List *list, mal::Env& env) {
 }
 
 mal::Type::Ptr if_form(const mal::List *list, mal::Env& env) {
-  if (!is_form(list, "if")) {
-    return nullptr;
-  }
   if (list->size() != 4) {
     throw mal::Exception("if must be a length 4 list. Got " +
                          std::to_string(list->size()));
   }
   auto condiction = EVAL((*list)[1], env);
-  if (dynamic_cast<mal::Nil*>(condiction.get()) == nullptr &&
-      dynamic_cast<mal::False*>(condiction.get()) == nullptr) {
-    return EVAL((*list)[2], env);
+  if (dynamic_cast<mal::Nil*>(condiction.get()) == nullptr) {
+    if (auto f = dynamic_cast<mal::Boolean*>(condiction.get());
+        f!= nullptr && (!f->value())) {
+      return EVAL((*list)[2], env);
+    }
   }
   return EVAL((*list)[3], env);
 }
 
 mal::Type::Ptr fn_star(const mal::List* list, mal::Env& env) {
-  if (!is_form(list, "fn*")) {
-    return nullptr;
-  }
   if (list->size() != 3) {
     throw mal::Exception("if must be a length 3 list. Got " +
                          std::to_string(list->size()));
@@ -107,9 +94,9 @@ mal::Type::Ptr fn_star(const mal::List* list, mal::Env& env) {
 mal::Type::Ptr apply(const mal::List *ret_list_ptr, mal::Env& env) {
   auto func_ptr = dynamic_cast<mal::Callable *>((*ret_list_ptr)[0].get());
   if (func_ptr == nullptr) {
-    throw mal::Exception("First element is not a function");
+    throw mal::Exception("First element is not a callable");
   }
-  return func_ptr->call(ret_list_ptr->begin() + 1, ret_list_ptr->end());
+  return func_ptr->call(ret_list_ptr->parameter_iter());
 }
 
 mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::Env &env) {
@@ -145,31 +132,24 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env) {
     return ast;
   }
   // def!
-  auto ret_def_bang = def_bang(list_ptr, env);
-  if (ret_def_bang != nullptr) {
-    return ret_def_bang;
+  if (is_form(list_ptr, "def!")) {
+     return def_bang(list_ptr, env);
   }
   // let*
-  auto ret_let_star = let_star(list_ptr, env);
-  if (ret_let_star != nullptr) {
-    return ret_let_star;
+  if (is_form(list_ptr, "let*")) {
+    return let_star(list_ptr, env);
   }
   // do
-  auto ret_do = do_form(list_ptr, env);
-  if (ret_do != nullptr) {
-    return ret_do;
+  if (is_form(list_ptr, "do")) {
+    return do_form(list_ptr, env);
   }
-
-  // do
-  auto ret_if = if_form(list_ptr, env);
-  if (ret_if != nullptr) {
-    return ret_if;
+  // if
+  if (is_form(list_ptr, "if")) {
+    return if_form(list_ptr, env);
   }
-
-  // fn
-  auto fn_if = fn_star(list_ptr, env);
-  if (fn_if != nullptr) {
-    return fn_if;
+  // fn*
+  if (is_form(list_ptr, "fn*")) {
+    return fn_star(list_ptr, env);
   }
 
   // apply section
