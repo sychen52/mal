@@ -18,77 +18,63 @@ bool is_form(const mal::List* list, const std::string& key) {
   return true;
 }
 
-mal::Type::Ptr def_bang(const mal::List *list, mal::Env& env) {
-  if (list->size() != 3) {
-    throw mal::Exception("def! must be a length 3 list. Got " +
-                         std::to_string(list->size()));
-  }
-  auto second = dynamic_cast<mal::Symbol*>((*list)[1].get());
-  if (second == nullptr) {
-    throw mal::Exception("def!'s first argument must be symbol");
-  }
-  auto ret = EVAL((*list)[2], env);
+mal::Type::Ptr def_bang(mal::ParameterIter&& it, mal::Env& env) {
+  auto second = it.pop<mal::Symbol>();
+  auto ret = it.pop();
+  it.no_extra();
   env.set(*second, ret);
   return ret;
 }
 
-mal::Type::Ptr let_star(const mal::List *list, mal::Env& env) {
-  if (list->size() != 3) {
-    throw mal::Exception("let* must be a length 3 list. Got " +
-                         std::to_string(list->size()));
-  }
-  auto second = dynamic_cast<mal::List*>((*list)[1].get());
-  if (second == nullptr) {
-    throw mal::Exception("let*'s first argument must be list");
-  }
+mal::Type::Ptr let_star(mal::ParameterIter&& it, mal::Env& env) {
+  auto second = it.pop<mal::List>();
+  auto third = it.pop();
+  it.no_extra();
   if (second->size() % 2 == 1) {
     throw mal::Exception("let*'s first argument must be list with even number of item");
   }
   mal::Env new_env(&env);
   for (size_t i = 0; i < second->size(); i+=2) {
     auto symbol = dynamic_cast<mal::Symbol*>((*second)[i].get());
-    std::cout << "!" << i << std::endl;
     if (symbol == nullptr) {
       throw mal::Exception("the odd item in let* list must be symbol");
     }
     new_env.set(*symbol, EVAL((*second)[i+1], new_env));
   }
-  return EVAL((*list)[2], new_env);
+  return EVAL(third, new_env);
 }
 
-mal::Type::Ptr do_form(const mal::List *list, mal::Env& env) {
-  if (list->size() <= 1) {
-    throw mal::Exception("do must have at least 1 argument. Got " +
-                         std::to_string(list->size()-1));
+mal::Type::Ptr do_form(mal::ParameterIter&& it, mal::Env& env) {
+  if (it.is_done()) {
+    throw mal::Exception("do must have at least 1 argument.");
   }
   mal::Type::Ptr ret = nullptr;
-  for (auto it = list->begin()+1; it != list->end(); it++) {
-    ret = EVAL(*it, env);
+  while (!it.is_done()) {
+    ret = EVAL(it.pop(), env);
   }
   return ret;
 }
 
-mal::Type::Ptr if_form(const mal::List *list, mal::Env& env) {
-  if (list->size() != 4) {
-    throw mal::Exception("if must be a length 4 list. Got " +
-                         std::to_string(list->size()));
-  }
-  auto condiction = EVAL((*list)[1], env);
+mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::Env& env) {
+  auto second = it.pop();
+  auto third = it.pop();
+  auto fourth = it.pop();
+  it.no_extra();
+  auto condiction = EVAL(second, env);
   if (dynamic_cast<mal::Nil*>(condiction.get()) == nullptr) {
     if (auto f = dynamic_cast<mal::Boolean*>(condiction.get());
         f!= nullptr && (!f->value())) {
-      return EVAL((*list)[2], env);
+      return EVAL(third, env);
     }
   }
-  return EVAL((*list)[3], env);
+  return EVAL(fourth, env);
 }
 
-mal::Type::Ptr fn_star(const mal::List* list, mal::Env& env) {
-  if (list->size() != 3) {
-    throw mal::Exception("if must be a length 3 list. Got " +
-                         std::to_string(list->size()));
-  }
-  return std::make_shared<mal::Function>((*list)[1], (*list)[2], &env);
+mal::Type::Ptr fn_star(mal::ParameterIter&& it, mal::Env& env) {
+  auto second = it.pop();
+  auto third = it.pop();
+  it.no_extra();
+  return std::make_shared<mal::Function>(second, third, &env);
 }
 
 mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
@@ -133,23 +119,23 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env) {
   }
   // def!
   if (is_form(list_ptr, "def!")) {
-     return def_bang(list_ptr, env);
+     return def_bang(list_ptr->parameter_iter(), env);
   }
   // let*
   if (is_form(list_ptr, "let*")) {
-    return let_star(list_ptr, env);
+    return let_star(list_ptr->parameter_iter(), env);
   }
   // do
   if (is_form(list_ptr, "do")) {
-    return do_form(list_ptr, env);
+    return do_form(list_ptr->parameter_iter(), env);
   }
   // if
   if (is_form(list_ptr, "if")) {
-    return if_form(list_ptr, env);
+    return if_form(list_ptr->parameter_iter(), env);
   }
   // fn*
   if (is_form(list_ptr, "fn*")) {
-    return fn_star(list_ptr, env);
+    return fn_star(list_ptr->parameter_iter(), env);
   }
 
   // apply section

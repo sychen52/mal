@@ -97,25 +97,7 @@ namespace mal{
   }
 
   bool equal(const Type::Ptr& first, const Type::Ptr second) {
-    if (typeid(first) != typeid(second)) {
-      return false;
-    }
-    auto first_list = dynamic_cast<List*>(first.get());
-    auto second_list = dynamic_cast<List*>(second.get());
-    if (first_list != nullptr) {
-      if (first_list->size() != second_list->size()) {
-        return false;
-      }
-      for (size_t i = 0; i < first_list->size(); ++i) {
-        if (!equal((*first_list)[0], (*second_list)[0])) {
-          return false;
-        }
-      }
-      return true;
-    }
-    else {
-      return true;//first->value() == second->value();
-    }
+    return (*first)==(*second);
   }
 
   Type::Ptr Equal::call(ParameterIter& it) {

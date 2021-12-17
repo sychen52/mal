@@ -25,7 +25,7 @@ namespace mal {
     using Ptr = std::shared_ptr<Type>;
     virtual std::string to_string() const = 0;
     virtual bool operator==(const Type& rhs) const = 0;
-    inline virtual bool operator!=(const Type& rhs) const { return ! operator==(rhs); };
+    inline virtual bool operator!=(const Type& rhs) const { return !this->operator==(rhs); };
   };
 
   template<class T>
@@ -128,6 +128,10 @@ namespace mal {
     virtual Type::Ptr call(ParameterIter&& it) {return call(it);};
     virtual std::string to_string() const override {
       return "this is a Callable";
+    }
+    inline bool operator==(const Type &) const override {
+      throw mal::Exception("Callable cannot be compared");
+      return false;
     }
   };
 } // namespace mal
