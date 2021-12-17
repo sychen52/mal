@@ -91,7 +91,7 @@ mal::Type::Ptr fn_star(const mal::List* list, mal::Env& env) {
   return std::make_shared<mal::Function>((*list)[1], (*list)[2], &env);
 }
 
-mal::Type::Ptr apply(const mal::List *ret_list_ptr, mal::Env& env) {
+mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
   auto func_ptr = dynamic_cast<mal::Callable *>((*ret_list_ptr)[0].get());
   if (func_ptr == nullptr) {
     throw mal::Exception("First element is not a callable");
@@ -162,7 +162,7 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env &env) {
   if (ret_list_ptr->empty()) {
     throw std::invalid_argument("eval_ast return an empty list");
   }
-  return apply(ret_list_ptr, env);
+  return apply(ret_list_ptr);
 }
 
 mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env&& env) {

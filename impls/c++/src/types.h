@@ -4,11 +4,28 @@
 #include <string>
 #include <vector>
 
+#define EQUAL_WITH_VALUE(TOTYPE)                        \
+  bool operator==(const Type& rhs) const override {     \
+    auto other = dynamic_cast<const TOTYPE*>(&rhs);     \
+    if (other == nullptr) {                             \
+      return false;                                     \
+    }                                                   \
+    return value() == other->value();                   \
+  }
+
+#define EQUAL(TOTYPE)                                   \
+  bool operator==(const Type& rhs) const override {     \
+    auto other = dynamic_cast<const TOTYPE*>(&rhs);     \
+    return other != nullptr;                            \
+  }
+
 namespace mal {
   class Type {
   public:
     using Ptr = std::shared_ptr<Type>;
     virtual std::string to_string() const = 0;
+    virtual bool operator==(const Type& rhs) const = 0;
+    inline virtual bool operator!=(const Type& rhs) const { return ! operator==(rhs); };
   };
 
   template<class T>
@@ -29,13 +46,7 @@ namespace mal {
     inline virtual std::string to_string() const override {
       return std::to_string(value());
     }
-    bool operator==(const Type& rhs) const {
-      auto other = dynamic_cast<const Number*>(&rhs);
-      if (other == nullptr) {
-        return false;
-      }
-      return value() == other->value();
-    }
+    EQUAL_WITH_VALUE(Number)
   };
 
   class Symbol : public TypeTemplate<std::string> {
@@ -43,19 +54,14 @@ namespace mal {
     using Ptr = std::shared_ptr<Symbol>;
     Symbol(const std::string &exp) : TypeTemplate(exp) {}
     virtual std::string to_string() const override { return value(); }
-    bool operator==(const Type& rhs) const {
-      auto other = dynamic_cast<const Symbol*>(&rhs);
-      if (other == nullptr) {
-        return false;
-      }
-      return value() == other->value();
-    }
+    EQUAL_WITH_VALUE(Symbol)
   };
 
   class String : public TypeTemplate<std::string> {
   public:
     String(const std::string &exp) : TypeTemplate(exp.substr(0, exp.size() - 2)) {}
     virtual std::string to_string() const override { return "\"" + value() + "\""; }
+    EQUAL_WITH_VALUE(String)
   };
 
   class ParameterIter;
@@ -74,6 +80,7 @@ namespace mal {
     inline Iter begin() const {return value_.begin();}
     inline Iter end() const {return value_.end();}
     ParameterIter parameter_iter() const;
+    bool operator==(const Type &rhs) const override;
   };
 
   class ParameterIter {
@@ -104,15 +111,17 @@ namespace mal {
   class Boolean: public TypeTemplate<bool> {
     public:
     Boolean(const bool value): TypeTemplate(value) {}
-    std::string to_string() const { return std::to_string(value()); }
+    std::string to_string() const override{ return std::to_string(value()); }
+    EQUAL_WITH_VALUE(Boolean)
   };
 
-  class Nil: public TypeTemplate<void*> {
+  class Nil: public Type {
   public:
-    std::string to_string() const { return "nil"; }
+    std::string to_string() const override{ return "nil"; }
+    EQUAL(Nil)
   };
 
-  class Callable : public TypeTemplate<void*> {
+  class Callable : public Type {
   public:
     using Ptr = std::shared_ptr<Callable>;
     virtual Type::Ptr call(ParameterIter& it) = 0;

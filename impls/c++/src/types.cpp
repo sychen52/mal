@@ -48,3 +48,20 @@ mal::Type::Ptr mal::ParameterIter::pop() {
   next();
   return ret;
 }
+
+bool mal::List::operator==(const Type &rhs) const {
+  auto other = dynamic_cast<const List *>(&rhs);
+  if (other == nullptr) {
+    return false;
+  }
+  if (size() != other->size()) {
+    return false;
+  }
+  for (auto lhs_it = begin(), rhs_it = other->begin(); lhs_it != end();
+       ++lhs_it, ++rhs_it) {
+    if ((*lhs_it)->operator!=(**rhs_it)) {
+      return false;
+    }
+  }
+  return true;
+}
