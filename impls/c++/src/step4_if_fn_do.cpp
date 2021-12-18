@@ -61,13 +61,14 @@ mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::Env& env) {
   auto fourth = it.pop();
   it.no_extra();
   auto condiction = EVAL(second, env);
-  if (dynamic_cast<mal::Nil*>(condiction.get()) == nullptr) {
-    if (auto f = dynamic_cast<mal::Boolean*>(condiction.get());
-        f!= nullptr && (!f->value())) {
-      return EVAL(third, env);
-    }
+  if (dynamic_cast<mal::Nil*>(condiction.get()) != nullptr) {
+    return EVAL(fourth, env);
   }
-  return EVAL(fourth, env);
+  if (auto f = dynamic_cast<mal::Boolean*>(condiction.get());
+      f != nullptr && (!f->value())) {
+    return EVAL(fourth, env);
+  }
+  return EVAL(third, env);
 }
 
 mal::Type::Ptr fn_star(mal::ParameterIter&& it, mal::Env& env) {

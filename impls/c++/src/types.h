@@ -111,11 +111,11 @@ namespace mal {
   class Boolean: public TypeTemplate<bool> {
     public:
     Boolean(const bool value): TypeTemplate(value) {}
-    std::string to_string() const override{ return std::to_string(value()); }
+    std::string to_string() const override{ return value()?"true":"false"; }
     EQUAL_WITH_VALUE(Boolean)
   };
 
-  class Nil: public Type {
+  class Nil: public List {
   public:
     std::string to_string() const override{ return "nil"; }
     EQUAL(Nil)

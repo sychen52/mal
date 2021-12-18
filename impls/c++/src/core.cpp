@@ -72,7 +72,9 @@ namespace mal{
     if (it.is_done()) {
       return std::make_shared<Boolean>(false);
     }
-    return std::make_shared<Boolean>(it.pop<List>() != nullptr);
+    auto second =it.pop();
+    return std::make_shared<Boolean>(dynamic_cast<List*>(second.get())
+                                     != nullptr);
   }
 
   Type::Ptr EmptyPredicate::call(ParameterIter& it) {
