@@ -115,8 +115,9 @@ namespace mal {
     EQUAL_WITH_VALUE(Boolean)
   };
 
-  class Nil: public List {
+  class Nil: public Type {
   public:
+    Nil() {}
     std::string to_string() const override{ return "nil"; }
     EQUAL(Nil)
   };

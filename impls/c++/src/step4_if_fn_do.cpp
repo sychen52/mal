@@ -20,7 +20,8 @@ bool is_form(const mal::List* list, const std::string& key) {
 
 mal::Type::Ptr def_bang(mal::ParameterIter&& it, mal::Env& env) {
   auto second = it.pop<mal::Symbol>();
-  auto ret = it.pop();
+  auto third = it.pop();
+  auto ret = EVAL(third, env);
   it.no_extra();
   env.set(*second, ret);
   return ret;
@@ -58,8 +59,14 @@ mal::Type::Ptr do_form(mal::ParameterIter&& it, mal::Env& env) {
 mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::Env& env) {
   auto second = it.pop();
   auto third = it.pop();
-  auto fourth = it.pop();
-  it.no_extra();
+  mal::Type::Ptr fourth;
+  if (it.is_done()) {
+    fourth = std::make_shared<mal::Nil>();
+  }
+  else {
+    fourth = it.pop();
+    it.no_extra();
+  }
   auto condiction = EVAL(second, env);
   if (dynamic_cast<mal::Nil*>(condiction.get()) != nullptr) {
     return EVAL(fourth, env);

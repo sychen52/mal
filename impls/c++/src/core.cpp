@@ -79,14 +79,20 @@ namespace mal{
 
   Type::Ptr EmptyPredicate::call(ParameterIter& it) {
     auto list = it.pop<List>();
-    return std::make_shared<Boolean>(list->size() == 0);
     it.no_extra();
+    return std::make_shared<Boolean>(list->size() == 0);
   }
 
   Type::Ptr Count::call(ParameterIter& it) {
-    auto list = it.pop<List>();
-    return std::make_shared<Number>(list->size());
+    auto item = it.pop();
     it.no_extra();
+    if (auto list = dynamic_cast<List*>(item.get()); list != nullptr) {
+      return std::make_shared<Number>(list->size());
+    }
+    else if (dynamic_cast<Nil*>(item.get()) != nullptr) {
+      return std::make_shared<Number>(0);
+    }
+    throw Exception("Count only takes list or nil");
   }
 
   template<typename FuncType>
