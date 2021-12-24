@@ -4,10 +4,10 @@
 #include <string>
 
 // forward declaration
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env&& env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env::Ptr env);
 
 
-mal::Env::Env(const Env *outer, const std::vector<std::string> &binds,
+mal::Env::Env(const Env::Ptr outer, const std::vector<std::string> &binds,
               ParameterIter& it)
   : outer_(outer) {
   for (const auto &key : binds) {
@@ -23,6 +23,7 @@ mal::Type::Ptr mal::Env::get(const Symbol &symbol) const {
   }
   return env->data_.at(symbol.value());
 }
+
 const mal::Env *mal::Env::find(const Symbol &key) const {
   auto it = data_.find(key.value());
   if (it == data_.end()) {
@@ -35,7 +36,7 @@ const mal::Env *mal::Env::find(const Symbol &key) const {
 }
 
 mal::Function::Function(const Type::Ptr binds, const Type::Ptr ast,
-                        const Env *env)
+                        const Env::Ptr env)
     : ast_(ast), env_(env) {
   auto binds_ptr = dynamic_cast<mal::List *>(binds.get());
   if (binds_ptr == nullptr) {
@@ -58,5 +59,5 @@ mal::Function::call(ParameterIter& it) {
   // This is the ealiest place to check the number of exprs equals to number of
   // binds. I did this in Env constructor. Checking of the validity of binds are
   // during Functions constructor
-  return EVAL(ast_, Env(env_, binds_, it));
+  return EVAL(ast_, std::make_shared<Env>(env_, binds_, it));
 }

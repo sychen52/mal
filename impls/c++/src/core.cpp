@@ -143,22 +143,22 @@ namespace mal{
                                  return lhs>=rhs;});
   }
 
-  Env build_env() {
-    auto repl_env = Env();
-    repl_env.set(Symbol("+"), std::make_shared<Add>());
-    repl_env.set(Symbol("-"), std::make_shared<Minus>());
-    repl_env.set(Symbol("*"), std::make_shared<Multiply>());
-    repl_env.set(Symbol("/"), std::make_shared<Divide>());
-    repl_env.set(Symbol("prn"), std::make_shared<Prn>());
-    repl_env.set(Symbol("list"), std::make_shared<ListFunction>());
-    repl_env.set(Symbol("list?"), std::make_shared<ListPredicate>());
-    repl_env.set(Symbol("empty?"), std::make_shared<EmptyPredicate>());
-    repl_env.set(Symbol("count"), std::make_shared<Count>());
-    repl_env.set(Symbol("="), std::make_shared<Equal>());
-    repl_env.set(Symbol("<"), std::make_shared<Less>());
-    repl_env.set(Symbol("<="), std::make_shared<LessEqual>());
-    repl_env.set(Symbol(">"), std::make_shared<Larger>());
-    repl_env.set(Symbol(">="), std::make_shared<LargerEqual>());
+  Env::Ptr build_env() {
+    auto repl_env = std::make_shared<Env>();
+    repl_env->set(Symbol("+"), std::make_shared<Add>());
+    repl_env->set(Symbol("-"), std::make_shared<Minus>());
+    repl_env->set(Symbol("*"), std::make_shared<Multiply>());
+    repl_env->set(Symbol("/"), std::make_shared<Divide>());
+    repl_env->set(Symbol("prn"), std::make_shared<Prn>());
+    repl_env->set(Symbol("list"), std::make_shared<ListFunction>());
+    repl_env->set(Symbol("list?"), std::make_shared<ListPredicate>());
+    repl_env->set(Symbol("empty?"), std::make_shared<EmptyPredicate>());
+    repl_env->set(Symbol("count"), std::make_shared<Count>());
+    repl_env->set(Symbol("="), std::make_shared<Equal>());
+    repl_env->set(Symbol("<"), std::make_shared<Less>());
+    repl_env->set(Symbol("<="), std::make_shared<LessEqual>());
+    repl_env->set(Symbol(">"), std::make_shared<Larger>());
+    repl_env->set(Symbol(">="), std::make_shared<LargerEqual>());
     return repl_env;
   }
 
