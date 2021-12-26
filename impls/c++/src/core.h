@@ -6,91 +6,91 @@
 
 namespace mal {
 
-  class Add : public Callable {
+  class Add : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "+";};
   };
 
-  class Multiply : public Callable {
+  class Multiply : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "*";};
   };
 
-  class Minus : public Callable {
+  class Minus : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "-";};
   };
 
-  class Divide : public Callable {
+  class Divide : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "/";};
   };
 
-  class Prn : public Callable {
+  class Prn : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "prn";};
   };
 
-  class ListFunction : public Callable {
+  class ListFunction : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "list";};
   };
 
-  class ListPredicate : public Callable {
+  class ListPredicate : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "list?";};
   };
 
-  class EmptyPredicate : public Callable {
+  class EmptyPredicate : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "empty?";};
   };
 
-  class Count : public Callable {
+  class Count : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "count";};
   };
 
-  class Equal : public Callable {
+  class Equal : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "=";};
   };
 
-  class Less : public Callable {
+  class Less : public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "<";};
   };
 
-  class LessEqual: public Callable {
+  class LessEqual: public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return "<=";};
   };
 
-  class Larger: public Callable {
+  class Larger: public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return ">";};
   };
 
-  class LargerEqual: public Callable {
+  class LargerEqual: public Applicable {
   public:
-    Type::Ptr call(ParameterIter&) override;
+    Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return ">=";};
   };
 
-  Env::Ptr build_env();
+  EnvFrame::Ptr build_env();
   //
   //  //template<class T=void>
   //  //std::tuple<> get_arguments(const List::Iter &start, const List::Iter &end,

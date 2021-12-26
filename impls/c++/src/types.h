@@ -122,13 +122,13 @@ namespace mal {
     EQUAL(Nil)
   };
 
-  class Callable : public Type {
+  class Applicable : public Type {
   public:
-    using Ptr = std::shared_ptr<Callable>;
-    virtual Type::Ptr call(ParameterIter& it) = 0;
-    virtual Type::Ptr call(ParameterIter&& it) {return call(it);};
+    using Ptr = std::shared_ptr<Applicable>;
+    virtual Type::Ptr apply(ParameterIter& it) = 0;
+    virtual Type::Ptr apply(ParameterIter&& it) {return apply(it);};
     virtual std::string to_string() const override {
-      return "this is a Callable";
+      return "this is an applicable";
     }
     inline bool operator==(const Type &) const override {
       throw mal::Exception("Callable cannot be compared");

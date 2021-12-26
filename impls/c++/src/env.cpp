@@ -4,10 +4,10 @@
 #include <string>
 
 // forward declaration
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env::Ptr env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
 
 
-mal::Env::Env(const Env::Ptr outer, const std::vector<std::string> &binds,
+mal::EnvFrame::EnvFrame(const EnvFrame::Ptr outer, const std::vector<std::string> &binds,
               ParameterIter& it)
   : outer_(outer) {
   for (const auto &key : binds) {
@@ -16,7 +16,7 @@ mal::Env::Env(const Env::Ptr outer, const std::vector<std::string> &binds,
   it.no_extra();
 }
 
-mal::Type::Ptr mal::Env::get(const Symbol &symbol) const {
+mal::Type::Ptr mal::EnvFrame::get(const Symbol &symbol) const {
   auto env = find(symbol);
   if (env == nullptr) {
     throw Exception(symbol.value() + " not found.");
@@ -24,7 +24,7 @@ mal::Type::Ptr mal::Env::get(const Symbol &symbol) const {
   return env->data_.at(symbol.value());
 }
 
-const mal::Env *mal::Env::find(const Symbol &key) const {
+const mal::EnvFrame *mal::EnvFrame::find(const Symbol &key) const {
   auto it = data_.find(key.value());
   if (it == data_.end()) {
     if (outer_ == nullptr) {
@@ -35,8 +35,8 @@ const mal::Env *mal::Env::find(const Symbol &key) const {
   return this;
 }
 
-mal::Function::Function(const Type::Ptr binds, const Type::Ptr ast,
-                        const Env::Ptr env)
+mal::Procedure::Procedure(const Type::Ptr binds, const Type::Ptr ast,
+                        const EnvFrame::Ptr env)
     : ast_(ast), env_(env) {
   auto binds_ptr = dynamic_cast<mal::List *>(binds.get());
   if (binds_ptr == nullptr) {
@@ -55,9 +55,9 @@ mal::Function::Function(const Type::Ptr binds, const Type::Ptr ast,
 }
 
 mal::Type::Ptr
-mal::Function::call(ParameterIter& it) {
+mal::Procedure::apply(ParameterIter& it) {
   // This is the ealiest place to check the number of exprs equals to number of
   // binds. I did this in Env constructor. Checking of the validity of binds are
   // during Functions constructor
-  return EVAL(ast_, std::make_shared<Env>(env_, binds_, it));
+  return EVAL(ast_, std::make_shared<EnvFrame>(env_, binds_, it));
 }

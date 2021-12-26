@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <string>
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env::Ptr env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
 
 bool is_form(const mal::List* list, const std::string& key) {
   auto first = dynamic_cast<mal::Symbol*>((*list)[0].get());
@@ -18,7 +18,7 @@ bool is_form(const mal::List* list, const std::string& key) {
   return true;
 }
 
-mal::Type::Ptr def_bang(mal::ParameterIter&& it, mal::Env::Ptr env) {
+mal::Type::Ptr def_bang(mal::ParameterIter&& it, mal::EnvFrame::Ptr env) {
   auto second = it.pop<mal::Symbol>();
   auto third = it.pop();
   auto ret = EVAL(third, env);
@@ -27,14 +27,14 @@ mal::Type::Ptr def_bang(mal::ParameterIter&& it, mal::Env::Ptr env) {
   return ret;
 }
 
-mal::Type::Ptr let_star(mal::ParameterIter&& it, mal::Env::Ptr env) {
+mal::Type::Ptr let_star(mal::ParameterIter&& it, mal::EnvFrame::Ptr env) {
   auto second = it.pop<mal::List>();
   auto third = it.pop();
   it.no_extra();
   if (second->size() % 2 == 1) {
     throw mal::Exception("let*'s first argument must be list with even number of item");
   }
-  auto new_env = std::make_shared<mal::Env>(env);
+  auto new_env = std::make_shared<mal::EnvFrame>(env);
   for (size_t i = 0; i < second->size(); i+=2) {
     auto symbol = dynamic_cast<mal::Symbol*>((*second)[i].get());
     if (symbol == nullptr) {
@@ -45,7 +45,7 @@ mal::Type::Ptr let_star(mal::ParameterIter&& it, mal::Env::Ptr env) {
   return EVAL(third, new_env);
 }
 
-mal::Type::Ptr do_form(mal::ParameterIter&& it, mal::Env::Ptr env) {
+mal::Type::Ptr do_form(mal::ParameterIter&& it, mal::EnvFrame::Ptr env) {
   if (it.is_done()) {
     throw mal::Exception("do must have at least 1 argument.");
   }
@@ -56,7 +56,7 @@ mal::Type::Ptr do_form(mal::ParameterIter&& it, mal::Env::Ptr env) {
   return ret;
 }
 
-mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::Env::Ptr env) {
+mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::EnvFrame::Ptr env) {
   auto second = it.pop();
   auto third = it.pop();
   mal::Type::Ptr fourth;
@@ -78,22 +78,22 @@ mal::Type::Ptr if_form(mal::ParameterIter&& it, mal::Env::Ptr env) {
   return EVAL(third, env);
 }
 
-mal::Type::Ptr fn_star(mal::ParameterIter&& it, mal::Env::Ptr env) {
+mal::Type::Ptr fn_star(mal::ParameterIter&& it, mal::EnvFrame::Ptr env) {
   auto second = it.pop();
   auto third = it.pop();
   it.no_extra();
-  return std::make_shared<mal::Function>(second, third, env);
+  return std::make_shared<mal::Procedure>(second, third, env);
 }
 
 mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
-  auto func_ptr = dynamic_cast<mal::Callable *>((*ret_list_ptr)[0].get());
+  auto func_ptr = dynamic_cast<mal::Applicable *>((*ret_list_ptr)[0].get());
   if (func_ptr == nullptr) {
-    throw mal::Exception("First element is not a callable");
+    throw mal::Exception("First element is not a applicable");
   }
-  return func_ptr->call(ret_list_ptr->parameter_iter());
+  return func_ptr->apply(ret_list_ptr->parameter_iter());
 }
 
-mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::Env::Ptr env) {
+mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
   // symbol
   auto symbol_ptr = dynamic_cast<const mal::Symbol *>(ast.get());
   if (symbol_ptr != nullptr) {
@@ -115,7 +115,7 @@ mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::Env::Ptr env) {
 
 mal::Type::Ptr READ(const std::string &input) { return read_str(input); }
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env::Ptr env) {
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
   // not a list
   auto list_ptr = dynamic_cast<mal::List *>(ast.get());
   if (list_ptr == nullptr) {
@@ -161,7 +161,7 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::Env::Ptr env) {
 
 std::string PRINT(mal::Type::Ptr input) { return pr_str(*input); }
 
-std::string rep(const std::string& input, mal::Env::Ptr env) {
+std::string rep(const std::string& input, mal::EnvFrame::Ptr env) {
   return PRINT(EVAL(READ(input), env));
 }
 

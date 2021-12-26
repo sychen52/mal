@@ -6,7 +6,7 @@
 #include <utility>
 
 namespace mal{
-  Type::Ptr Add::call(ParameterIter& it) {
+  Type::Ptr Add::apply(ParameterIter& it) {
     int64_t ret = 0;
     while (!it.is_done()) {
       auto ptr = it.pop<Number>();
@@ -15,7 +15,7 @@ namespace mal{
     return std::make_shared<Number>(ret);
   }
 
-  Type::Ptr Multiply::call(ParameterIter& it) {
+  Type::Ptr Multiply::apply(ParameterIter& it) {
     int64_t ret = 1;
     while (!it.is_done()) {
       auto ptr = it.pop<Number>();
@@ -24,7 +24,7 @@ namespace mal{
     return std::make_shared<Number>(ret);
   }
 
-  Type::Ptr Minus::call(ParameterIter& it) {
+  Type::Ptr Minus::apply(ParameterIter& it) {
     int64_t ret = 0;
     bool first_arg = true;
     while (!it.is_done()) {
@@ -39,7 +39,7 @@ namespace mal{
     return std::make_shared<Number>(ret);
   }
 
-  Type::Ptr Divide::call(ParameterIter& it) {
+  Type::Ptr Divide::apply(ParameterIter& it) {
     int64_t ret = 1;
     bool first_arg = true;
     while (!it.is_done()) {
@@ -53,14 +53,14 @@ namespace mal{
     return std::make_shared<Number>(ret);
   }
 
-  Type::Ptr Prn::call(ParameterIter& it) {
+  Type::Ptr Prn::apply(ParameterIter& it) {
     while (!it.is_done()) {
       std::cout<< it.pop()->to_string() <<std::endl;
     }
     return std::make_shared<Nil>();
   }
 
-  Type::Ptr ListFunction::call(ParameterIter& it) {
+  Type::Ptr ListFunction::apply(ParameterIter& it) {
     auto ret = std::make_shared<List>();
     while (!it.is_done()) {
       ret->append(it.pop());
@@ -68,7 +68,7 @@ namespace mal{
     return ret;
   }
 
-  Type::Ptr ListPredicate::call(ParameterIter& it) {
+  Type::Ptr ListPredicate::apply(ParameterIter& it) {
     if (it.is_done()) {
       return std::make_shared<Boolean>(false);
     }
@@ -77,13 +77,13 @@ namespace mal{
                                      != nullptr);
   }
 
-  Type::Ptr EmptyPredicate::call(ParameterIter& it) {
+  Type::Ptr EmptyPredicate::apply(ParameterIter& it) {
     auto list = it.pop<List>();
     it.no_extra();
     return std::make_shared<Boolean>(list->size() == 0);
   }
 
-  Type::Ptr Count::call(ParameterIter& it) {
+  Type::Ptr Count::apply(ParameterIter& it) {
     auto item = it.pop();
     it.no_extra();
     if (auto list = dynamic_cast<List*>(item.get()); list != nullptr) {
@@ -108,43 +108,43 @@ namespace mal{
     return (*first)==(*second);
   }
 
-  Type::Ptr Equal::call(ParameterIter& it) {
+  Type::Ptr Equal::apply(ParameterIter& it) {
     auto first = it.pop();
     auto second = it.pop();
     it.no_extra();
     return std::make_shared<Boolean>(equal(first, second));
   }
 
-  Type::Ptr Less::call(ParameterIter& it) {
+  Type::Ptr Less::apply(ParameterIter& it) {
     return compare_two_numbers(it,
                                [](const Number::NumberType& lhs,
                                   const Number::NumberType& rhs){
                                  return lhs<rhs;});
   }
 
-  Type::Ptr LessEqual::call(ParameterIter& it) {
+  Type::Ptr LessEqual::apply(ParameterIter& it) {
     return compare_two_numbers(it,
                                [](const Number::NumberType& lhs,
                                   const Number::NumberType& rhs){
                                  return lhs<=rhs;});
   }
 
-  Type::Ptr Larger::call(ParameterIter& it) {
+  Type::Ptr Larger::apply(ParameterIter& it) {
     return compare_two_numbers(it,
                                [](const Number::NumberType& lhs,
                                   const Number::NumberType& rhs){
                                  return lhs>rhs;});
   }
 
-  Type::Ptr LargerEqual::call(ParameterIter& it) {
+  Type::Ptr LargerEqual::apply(ParameterIter& it) {
     return compare_two_numbers(it,
                                [](const Number::NumberType& lhs,
                                   const Number::NumberType& rhs){
                                  return lhs>=rhs;});
   }
 
-  Env::Ptr build_env() {
-    auto repl_env = std::make_shared<Env>();
+  EnvFrame::Ptr build_env() {
+    auto repl_env = std::make_shared<EnvFrame>();
     repl_env->set(Symbol("+"), std::make_shared<Add>());
     repl_env->set(Symbol("-"), std::make_shared<Minus>());
     repl_env->set(Symbol("*"), std::make_shared<Multiply>());
