@@ -28,7 +28,8 @@ namespace mal {
   };
 
   // Procedure is the result of EVAL fn* (aka. lambda)
-  // The difference between user defined fn* and buildin Applicable is the extra frame of Env
+  // The difference between user defined fn* and buildin Applicable is:
+  // An extra frame of Env is created when each time it is applied.
   class Procedure : public Applicable {
   public:
     Procedure(const Type::Ptr binds, const Type::Ptr ast, const EnvFrame::Ptr env);
