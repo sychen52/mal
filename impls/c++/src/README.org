@@ -1,0 +1,35 @@
+* Why do we need shared_ptr of mal::Type?
+** Who needs to own mal::Type?
+- Environment: this is obvious.
+- PRINT function: if the object is not in any environment, its ownership has to be passed into PRINT before destruction.
+** A easy solution is to make EVAL return shared_ptr
+- When it is a query to the environment, its return is like a reference.
+- When it creates a temporary object, its return is to pass on ownership.
+** An alternative solution is making an extra copy when querying the environment.
+- cons: an extra copy
+
+* Do we need share_ptr of mal::EnvFrame?
+** let* + def! is simple
+it only creates a temporary EnvFrame and EVAL stuff in it. Even if you def! inside let*, def! will only modify the EnvFrame created by let*. Then the EVAL is safe to destroy.
+** The trick part is the fn* inside fn*/let*:
+- e.g. (((fn* () (fn* () (+ 1 1)))))
+- e.g. ((let* (a 1) (fn* () a)))
+- The "temporary" EnvFrame created by the outer fn* (when applied) and let* will be passed to the inner fn*'s constructor to store. However, before inner fn* is applied, the "temporary" EnvFrame will go out of scope.
+** Who needs to own mal::EnvFrame
+- the object fn* creates (mal::Procedure).
+- the outmost repl_env
+** A easy solution is to use shared_ptr
+- only when constructing fn*, the ownership or shared ownership (if repl_env) is passed.
+- in most other cases, it is just a reference.
+- This method has its own issue, which I will mention in the next section.
+** An alternative is for fn*'s constructor to create a copy of the env
+- Either a deep copy of all frames or creating a new env with only the ones used in the body.
+- a copy of env is not that bad since all mal::Type objects are stored as shared_ptr
+
+* The problem of shared_ptr<mal::EnvFrame>
+** step6 asks to implement eval as a mal::Procedure and store it in repl_env
+- This means repl_env needs to be passed to eval during construction.
+- As a result, the mal::Procedure object will own repl_env, and repl_env owns this object.
+** A easy solution is to implement eval as a special form
+** An alternative solution is to use the alternative solution in the previous section
+
