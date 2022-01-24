@@ -1,6 +1,7 @@
 #pragma once
 #include "env.h"
 #include "types.h"
+#include <memory>
 #include <tuple>
 #include <vector>
 
@@ -88,6 +89,15 @@ namespace mal {
   public:
     Type::Ptr apply(ParameterIter&) override;
     inline virtual std::string to_string() const override {return ">=";};
+  };
+
+  class Eval: public Applicable {
+  public:
+    Eval(EnvFrame::Ptr env): env_(env) {};
+    Type::Ptr apply(ParameterIter &) override;
+    inline virtual std::string to_string() const override {return "eval";};
+  private:
+    EnvFrame::Ptr const env_;
   };
 
   EnvFrame::Ptr build_env();

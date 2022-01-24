@@ -26,6 +26,7 @@ namespace mal {
     virtual std::string to_string() const = 0;
     virtual bool operator==(const Type& rhs) const = 0;
     inline virtual bool operator!=(const Type& rhs) const { return !this->operator==(rhs); };
+    virtual ~Type() = default;
   };
 
   template<class T>
@@ -89,9 +90,9 @@ namespace mal {
     ParameterIter(const List::Iter &start, const List::Iter &end,
                          const std::string &fn);
     template<typename T>
-    T* pop() {
+    std::shared_ptr<T> pop() {
       auto ptr = pop();
-      T* t = dynamic_cast<T*>(ptr.get());
+      auto t = std::dynamic_pointer_cast<T>(ptr);
       if (t == nullptr) {
         throw Exception("Wrong argument type for " + fn_ + ": " + typeid(T).name());
       }

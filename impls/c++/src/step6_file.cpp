@@ -9,7 +9,6 @@
 #include <stdexcept>
 #include <string>
 
-
 mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
 
 mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
@@ -25,7 +24,11 @@ mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
   auto symbol_ptr = dynamic_cast<const mal::Symbol *>(ast.get());
   if (symbol_ptr != nullptr) {
     // this is the whole point of using shared_ptr! Otherwise, unique_ptr is enough.
-    return env->get(*symbol_ptr);
+    auto ret = env->get(*symbol_ptr);
+    if (ret == nullptr) {
+      throw mal::Exception(symbol_ptr->value() + " not found.");
+    }
+    return ret;
   }
 
   // list
@@ -52,27 +55,13 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
   if (list_ptr->empty()) {
     return ast;
   }
-  // def!
-  if (is_form(list_ptr, "def!")) {
-     return def_bang(list_ptr->parameter_iter(), env);
-  }
-  // let*
-  if (is_form(list_ptr, "let*")) {
-    return let_star(list_ptr->parameter_iter(), env);
-  }
-  // do
-  if (is_form(list_ptr, "do")) {
-    return do_form(list_ptr->parameter_iter(), env);
-  }
-  // if
-  if (is_form(list_ptr, "if")) {
-    return if_form(list_ptr->parameter_iter(), env);
-  }
-  // fn*
-  if (is_form(list_ptr, "fn*")) {
-    return fn_star(list_ptr->parameter_iter(), env);
+
+  auto special_form = build_special_form(*list_ptr, env);
+  if (special_form) {
+    return (*special_form)();
   }
 
+  // normal list
   // apply section
   auto ret = eval_ast(ast, env);
   auto ret_list_ptr = dynamic_cast<mal::List *>(ret.get());
@@ -95,6 +84,8 @@ std::string rep(const std::string& input, mal::EnvFrame::Ptr env) {
 int main() {
   std::string input;
   auto repl_env = mal::build_env();
+  rep("(def! not (fn* (a) (if a false true)))", repl_env);
+  rep("(def! load-file (fn* (f) (eval (read-string (str \"(do \" (slurp f) \"\nnil)\")))))", repl_env);
 
   std::string prompt = "user> ";
   std::cout << prompt;
