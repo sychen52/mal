@@ -8,7 +8,7 @@ ifeq ($(uname_S),Darwin)
 	LIBPATHS=-L$(READLINE)/lib
 else
 	# Ubuntu 14.10 / docker
-	CXX=g++-4.9
+	CXX=g++
 endif
 
 LD=$(CXX)

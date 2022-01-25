@@ -11,7 +11,7 @@ mal::Type::Ptr read_string(const mal::String::Ptr string);
 
 mal::Type::Ptr slurp(const mal::String::Ptr filename);
 
-mal::Type::Ptr eval(mal::ParameterIter &&it, mal::EnvFrame::Ptr env);
+mal::Type::Ptr eval(mal::ParameterIter &&it, mal::EnvFrame::WeakPtr env);
 
 class Variables {
 public:
@@ -40,7 +40,7 @@ Variables get_variables(const mal::Type &ast);
  */
 class SpecialForm {
 public:
-  SpecialForm(mal::EnvFrame::Ptr env) : env_(env) {}
+  SpecialForm(mal::EnvFrame::WeakPtr env) : env_(env) {}
   virtual mal::Type::Ptr operator()() = 0;
   /**
    * This function will return free variables needed by the form and
@@ -48,12 +48,12 @@ public:
    */
   virtual Variables variables() = 0;
 protected:
-  mal::EnvFrame::Ptr env_;
+  mal::EnvFrame::WeakPtr env_;
 };
 
 class DefBang : public SpecialForm {
 public:
-  DefBang(const mal::List &list, mal::EnvFrame::Ptr env);
+  DefBang(const mal::List &list, mal::EnvFrame::WeakPtr env);
   virtual mal::Type::Ptr operator()() override;
   virtual Variables variables() override;
 
@@ -64,7 +64,7 @@ private:
 
 class LetStar : public SpecialForm {
 public:
-  LetStar(const mal::List &list, mal::EnvFrame::Ptr env);
+  LetStar(const mal::List &list, mal::EnvFrame::WeakPtr env);
   virtual mal::Type::Ptr operator()() override;
   virtual Variables variables() override;
 
@@ -75,7 +75,7 @@ private:
 
 class Do : public SpecialForm {
 public:
-  Do(const mal::List &list, mal::EnvFrame::Ptr env);
+  Do(const mal::List &list, mal::EnvFrame::WeakPtr env);
   virtual mal::Type::Ptr operator()() override;
   virtual Variables variables() override;
 
@@ -85,7 +85,7 @@ private:
 
 class If : public SpecialForm {
 public:
-  If(const mal::List &list, mal::EnvFrame::Ptr env);
+  If(const mal::List &list, mal::EnvFrame::WeakPtr env);
   virtual mal::Type::Ptr operator()() override;
   virtual Variables variables() override;
 
@@ -97,7 +97,7 @@ private:
 
 class FnStar : public SpecialForm {
 public:
-  FnStar(const mal::List &list, mal::EnvFrame::Ptr env);
+  FnStar(const mal::List &list, mal::EnvFrame::WeakPtr env);
   virtual mal::Type::Ptr operator()() override;
   virtual Variables variables() override;
 
@@ -107,4 +107,4 @@ private:
 };
 
 std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
-                                                mal::EnvFrame::Ptr env);
+                                                mal::EnvFrame::WeakPtr env);

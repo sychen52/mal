@@ -93,11 +93,11 @@ namespace mal {
 
   class Eval: public Applicable {
   public:
-    Eval(EnvFrame::Ptr env): env_(env) {};
+    Eval(EnvFrame::WeakPtr env): env_(env) {};
     Type::Ptr apply(ParameterIter &) override;
     inline virtual std::string to_string() const override {return "eval";};
   private:
-    EnvFrame::Ptr const env_;
+    EnvFrame::WeakPtr env_;
   };
 
   EnvFrame::Ptr build_env();

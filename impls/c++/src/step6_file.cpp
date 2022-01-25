@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <string>
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
 mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
   auto func_ptr = dynamic_cast<mal::Applicable *>((*ret_list_ptr)[0].get());
@@ -19,12 +19,12 @@ mal::Type::Ptr apply(const mal::List *ret_list_ptr) {
   return func_ptr->apply(ret_list_ptr->parameter_iter());
 }
 
-mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
+mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
   // symbol
   auto symbol_ptr = dynamic_cast<const mal::Symbol *>(ast.get());
   if (symbol_ptr != nullptr) {
-    // this is the whole point of using shared_ptr! Otherwise, unique_ptr is enough.
-    auto ret = env->get(*symbol_ptr);
+    // this is the whole point of using shared_ptr for mal::Type! Otherwise, unique_ptr is enough.
+    auto ret = env.lock()->get(*symbol_ptr);
     if (ret == nullptr) {
       throw mal::Exception(symbol_ptr->value() + " not found.");
     }
@@ -45,7 +45,7 @@ mal::Type::Ptr eval_ast(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
 
 mal::Type::Ptr READ(const std::string &input) { return read_str(input); }
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
   // not a list
   auto list_ptr = dynamic_cast<mal::List *>(ast.get());
   if (list_ptr == nullptr) {
@@ -77,7 +77,7 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env) {
 
 std::string PRINT(mal::Type::Ptr input) { return pr_str(*input); }
 
-std::string rep(const std::string& input, mal::EnvFrame::Ptr env) {
+std::string rep(const std::string& input, mal::EnvFrame::WeakPtr env) {
   return PRINT(EVAL(READ(input), env));
 }
 

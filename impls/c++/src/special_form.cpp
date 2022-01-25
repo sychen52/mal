@@ -3,7 +3,7 @@
 #include "types.h"
 #include <memory>
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
 mal::Type::Ptr slurp(const mal::String::Ptr filename) {
   std::string content;
@@ -31,7 +31,7 @@ bool is_form(const mal::List &list, const std::string &key) {
   return true;
 }
 
-DefBang::DefBang(const mal::List &list, mal::EnvFrame::Ptr env)
+DefBang::DefBang(const mal::List &list, mal::EnvFrame::WeakPtr env)
     : SpecialForm(env) {
   auto it = list.parameter_iter();
   symbol_ = it.pop<mal::Symbol>();
@@ -41,11 +41,11 @@ DefBang::DefBang(const mal::List &list, mal::EnvFrame::Ptr env)
 
 mal::Type::Ptr DefBang::operator()() {
   auto ret = EVAL(ast_, env_);
-  env_->set(*symbol_, ret);
+  env_.lock()->set(*symbol_, ret);
   return ret;
 }
 
-LetStar::LetStar(const mal::List &list, mal::EnvFrame::Ptr env)
+LetStar::LetStar(const mal::List &list, mal::EnvFrame::WeakPtr env)
     : SpecialForm(env) {
   auto it = list.parameter_iter();
   binds_ = it.pop<mal::List>();
@@ -57,7 +57,7 @@ LetStar::LetStar(const mal::List &list, mal::EnvFrame::Ptr env)
 }
 
 mal::Type::Ptr LetStar::operator()() {
-  auto new_env_ = std::make_shared<mal::EnvFrame>(env_);
+  auto new_env_ = std::make_shared<mal::EnvFrame>(env_.lock());
   for (size_t i = 0; i < binds_->size(); i += 2) {
     auto symbol = dynamic_cast<mal::Symbol *>((*binds_)[i].get());
     if (symbol == nullptr) {
@@ -68,7 +68,7 @@ mal::Type::Ptr LetStar::operator()() {
   return EVAL(ast_, new_env_);
 }
 
-Do::Do(const mal::List &list, mal::EnvFrame::Ptr env)
+Do::Do(const mal::List &list, mal::EnvFrame::WeakPtr env)
   : SpecialForm(env), it_(list.parameter_iter()) {
   if (it_.is_done()) {
     throw mal::Exception("do must have at least 1 argument.");
@@ -83,7 +83,7 @@ mal::Type::Ptr Do::operator()() {
   return ret;
 }
 
-If::If(const mal::List &list, mal::EnvFrame::Ptr env)
+If::If(const mal::List &list, mal::EnvFrame::WeakPtr env)
   : SpecialForm(env) {
   auto it = list.parameter_iter();
   condition_ = it.pop();
@@ -108,7 +108,7 @@ mal::Type::Ptr If::operator()() {
   return EVAL(ast_true_, env_);
 }
 
-FnStar::FnStar(const mal::List &list, mal::EnvFrame::Ptr env)
+FnStar::FnStar(const mal::List &list, mal::EnvFrame::WeakPtr env)
   : SpecialForm(env) {
   auto it = list.parameter_iter();
   parameters_ = it.pop<mal::List>();
@@ -117,10 +117,10 @@ FnStar::FnStar(const mal::List &list, mal::EnvFrame::Ptr env)
 }
 
 mal::Type::Ptr FnStar::operator()() {
-  return std::make_shared<mal::Procedure>(parameters_, body_, env_);
+  return std::make_shared<mal::Procedure>(parameters_, body_, env_.lock());
 }
 std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
-                                                mal::EnvFrame::Ptr env) {
+                                                mal::EnvFrame::WeakPtr env) {
   // def!
   if (is_form(list, "def!")) {
     return std::make_unique<DefBang>(list, env);

@@ -6,7 +6,7 @@
 #include <tuple>
 #include <utility>
 
-mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::Ptr env);
+mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
 namespace mal {
 Type::Ptr Add::apply(ParameterIter &it) {
@@ -147,7 +147,7 @@ Type::Ptr LargerEqual::apply(ParameterIter &it) {
 Type::Ptr Eval::apply(ParameterIter &it) {
   auto second = it.pop();
   it.no_extra();
-  return EVAL(second, env_);
+  return EVAL(second, env_.lock());
 };
 
 EnvFrame::Ptr build_env() {
@@ -166,6 +166,7 @@ EnvFrame::Ptr build_env() {
   repl_env->set(Symbol("<="), std::make_shared<LessEqual>());
   repl_env->set(Symbol(">"), std::make_shared<Larger>());
   repl_env->set(Symbol(">="), std::make_shared<LargerEqual>());
+  repl_env->set(Symbol("eval"), std::make_shared<Eval>(repl_env));
   return repl_env;
 }
 } // namespace mal
