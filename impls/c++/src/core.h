@@ -91,6 +91,24 @@ namespace mal {
     inline virtual std::string to_string() const override {return ">=";};
   };
 
+  class Str: public Applicable {
+  public:
+    Type::Ptr apply(ParameterIter&) override;
+    inline virtual std::string to_string() const override {return "str";};
+  };
+
+  class ReadString: public Applicable {
+  public:
+    Type::Ptr apply(ParameterIter&) override;
+    inline virtual std::string to_string() const override {return "read-string";};
+  };
+
+  class Slurp: public Applicable {
+  public:
+    Type::Ptr apply(ParameterIter&) override;
+    inline virtual std::string to_string() const override {return "slurp";};
+  };
+
   class Eval: public Applicable {
   public:
     Eval(EnvFrame::WeakPtr env): env_(env) {};

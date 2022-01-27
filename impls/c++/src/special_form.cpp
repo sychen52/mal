@@ -5,24 +5,6 @@
 
 mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
-mal::Type::Ptr slurp(const mal::String::Ptr filename) {
-  std::string content;
-  std::ifstream file(filename->value());
-  if (file) {
-    std::streampos filesize = file.tellg();
-    content.reserve(filesize);
-    file.seekg(0);
-    while (!file.eof()) {
-      content += file.get();
-    }
-  }
-  return std::make_shared<mal::String>(content);
-}
-
-mal::Type::Ptr read_string(const mal::String::Ptr string) {
-  return read_str(string->value());
-}
-
 bool is_form(const mal::List &list, const std::string &key) {
   auto first = dynamic_cast<mal::Symbol *>(list[0].get());
   if (first == nullptr || first->value() != key) {

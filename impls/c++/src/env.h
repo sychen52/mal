@@ -20,6 +20,8 @@ namespace mal {
 
     inline void set(const Symbol& key, Type::Ptr val) {data_[key.value()] = val;}
 
+    inline void add(Applicable::Ptr fun) {data_[fun->to_string()] = fun;}
+
     const EnvFrame* find(const Symbol &key) const;
 
   private:

@@ -1,6 +1,7 @@
-* Why do we need shared_ptr of mal::Type?
+* Why I we need shared_ptr of mal::Type?
 ** Who needs to own mal::Type?
 - Environment: this is obvious.
+- List: should own its items
 - PRINT function: if the object is not in any environment, its ownership has to be passed into PRINT before destruction.
 ** A easy solution is to make EVAL return shared_ptr
 - When it is a query to the environment, its return is like a reference.
@@ -8,7 +9,7 @@
 ** An alternative solution is making an extra copy when querying the environment.
 - cons: an extra copy
 
-* Do we need share_ptr of mal::EnvFrame?
+* Do I need share_ptr of mal::EnvFrame?
 ** let* + def! is simple
 it only creates a temporary EnvFrame and EVAL stuff in it. Even if you def! inside let*, def! will only modify the EnvFrame created by let*. Then the EVAL is safe to destroy.
 ** The trick part is the fn* inside fn*/let*:
@@ -40,5 +41,5 @@ In this method, eval is no longer a symbol in the env that can be copied to othe
 ** The solution in cpp folder: make repl_env a global variable
 - pass nullptr to EVAL, and EVAL will go and pick the global repl_env.
 - No more circular ownership; however, I really don't like the global variable 
-
+** Use weakptr to break the cycle.
 

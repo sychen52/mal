@@ -61,7 +61,7 @@ namespace mal {
   class String : public TypeTemplate<std::string> {
   public:
     using Ptr = std::shared_ptr<String>;
-    String(const std::string &exp) : TypeTemplate(exp.substr(0, exp.size() - 2)) {}
+    String(const std::string &exp) : TypeTemplate(exp) {}
     virtual std::string to_string() const override { return "\"" + value() + "\""; }
     EQUAL_WITH_VALUE(String)
   };

@@ -1,10 +1,12 @@
 #include "core.h"
 #include "exception.h"
 #include "types.h"
+#include "reader.h"
 #include <iostream>
 #include <memory>
 #include <tuple>
 #include <utility>
+#include <fstream>
 
 mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
@@ -144,6 +146,41 @@ Type::Ptr LargerEqual::apply(ParameterIter &it) {
       });
 }
 
+Type::Ptr Str::apply(ParameterIter &it) {
+  std::string ret;
+  while (!it.is_done()) {
+    ret += it.pop<String>()->value();
+  }
+  return std::make_shared<String>(ret);
+}
+
+Type::Ptr ReadString::apply(ParameterIter &it) {
+  auto string = it.pop<String>();
+  it.no_extra();
+  return read_str(string->value());
+}
+
+Type::Ptr Slurp::apply(ParameterIter &it) {
+  auto filename = it.pop<String>();
+  std::cout << filename->to_string() << std::endl;
+  it.no_extra();
+  std::string content;
+  std::ifstream file(filename->value());
+  if (file) {
+    std::streampos filesize = file.tellg();
+    std::cout << filesize << std::endl;
+    content.reserve(filesize);
+    file.seekg(0);
+    while (!file.eof()) {
+      content += file.get();
+    }
+  }
+  else {
+    throw mal::Exception("The file does not exist: " + filename->value());
+  }
+  return std::make_shared<mal::String>(content);
+}
+
 Type::Ptr Eval::apply(ParameterIter &it) {
   auto second = it.pop();
   it.no_extra();
@@ -152,21 +189,24 @@ Type::Ptr Eval::apply(ParameterIter &it) {
 
 EnvFrame::Ptr build_env() {
   auto repl_env = std::make_shared<EnvFrame>();
-  repl_env->set(Symbol("+"), std::make_shared<Add>());
-  repl_env->set(Symbol("-"), std::make_shared<Minus>());
-  repl_env->set(Symbol("*"), std::make_shared<Multiply>());
-  repl_env->set(Symbol("/"), std::make_shared<Divide>());
-  repl_env->set(Symbol("prn"), std::make_shared<Prn>());
-  repl_env->set(Symbol("list"), std::make_shared<ListFunction>());
-  repl_env->set(Symbol("list?"), std::make_shared<ListPredicate>());
-  repl_env->set(Symbol("empty?"), std::make_shared<EmptyPredicate>());
-  repl_env->set(Symbol("count"), std::make_shared<Count>());
-  repl_env->set(Symbol("="), std::make_shared<Equal>());
-  repl_env->set(Symbol("<"), std::make_shared<Less>());
-  repl_env->set(Symbol("<="), std::make_shared<LessEqual>());
-  repl_env->set(Symbol(">"), std::make_shared<Larger>());
-  repl_env->set(Symbol(">="), std::make_shared<LargerEqual>());
-  repl_env->set(Symbol("eval"), std::make_shared<Eval>(repl_env));
+  repl_env->add(std::make_shared<Add>());
+  repl_env->add(std::make_shared<Minus>());
+  repl_env->add(std::make_shared<Multiply>());
+  repl_env->add(std::make_shared<Divide>());
+  repl_env->add(std::make_shared<Prn>());
+  repl_env->add(std::make_shared<ListFunction>());
+  repl_env->add(std::make_shared<ListPredicate>());
+  repl_env->add(std::make_shared<EmptyPredicate>());
+  repl_env->add(std::make_shared<Count>());
+  repl_env->add(std::make_shared<Equal>());
+  repl_env->add(std::make_shared<Less>());
+  repl_env->add(std::make_shared<LessEqual>());
+  repl_env->add(std::make_shared<Larger>());
+  repl_env->add(std::make_shared<LargerEqual>());
+  repl_env->add(std::make_shared<Str>());
+  repl_env->add(std::make_shared<ReadString>());
+  repl_env->add(std::make_shared<Slurp>());
+  repl_env->add(std::make_shared<Eval>(repl_env));
   return repl_env;
 }
 } // namespace mal
