@@ -5,9 +5,8 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include <unordered_map>
+#include <iostream>
 
-namespace {
 std::string match_bracket(const std::string &s) {
   if (s == "(") {
     return ")";
@@ -18,9 +17,6 @@ std::string match_bracket(const std::string &s) {
   return "";
 }
 
-std::unordered_map<std::string, std::string>
-    dictionary({{"\\\n", "\n"}, {"\\\\", "\\"}, {"\\\"", "\""}});
-
 std::string readably(const std::string &input) {
   for (size_t i = 0; i < input.size(); ++i) {
     if (input[i] == '\\') {
@@ -28,17 +24,16 @@ std::string readably(const std::string &input) {
         throw mal::ReaderException("EOF before string ends.");
       }
       const auto &key = input.substr(i, 2);
-      const auto it = dictionary.find(key);
-      if (it == dictionary.end()) {
+      const auto it = Reader::escape(key);
+      if (!it.has_value()) {
         throw mal::ReaderException("EOF: wrong escape in string.");
       }
-      return input.substr(0, i) + (it->second) +
+      return input.substr(0, i) + (it.value()) +
              readably(input.substr(i + 2, input.size() - i - 2));
     }
   }
   return input;
 }
-} // namespace
 
 Reader::Reader(const std::vector<std::string> &tokens) : tokens_(tokens) {}
 
@@ -99,10 +94,10 @@ mal::List::Ptr Reader::read_list() {
 
 mal::Type::Ptr Reader::read_atom() {
   auto token = next();
-  if (('0' <= token[0] && '9' >= token[0]) ||
-      ((token[0] == '-' || token[0] == '+') && token.size() > 1)) {
+  try {
     return std::make_shared<mal::Number>(std::stoi(token));
   }
+  catch (const std::invalid_argument&) {}
   if (token[0] == '"') {
     if (token.size() < 2 || token[token.size() - 1] != '"') {
       throw mal::ReaderException("EOF before string ends. " + token);
@@ -152,4 +147,25 @@ mal::Type::Ptr read_str(const std::string &input) {
   //std::cout << reader.tokens() << std::endl;
   //std::cout << "!!!!!!!!!!!!!!!!!!!!" << std::endl;
   return ret;
+}
+
+const std::array<std::pair<std::string, char>, 3> Reader::dictionary = {
+    {{"\\\n", '\n'}, {"\\\\", '\\'}, {"\\\"", '"'}}};
+
+std::optional<std::string> Reader::unescape(const char key) {
+  for (const auto &pair : dictionary) {
+    if (pair.second == key) {
+      return std::make_optional<std::string>(pair.first);
+    }
+  }
+  return {};
+}
+
+std::optional<char> Reader::escape(const std::string &key) {
+  for (const auto &pair : dictionary) {
+    if (pair.first == key) {
+      return std::make_optional<char>(pair.second);
+    }
+  }
+  return {};
 }

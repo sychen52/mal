@@ -75,7 +75,9 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
   return apply(ret_list_ptr);
 }
 
-std::string PRINT(mal::Type::Ptr input) { return pr_str(*input); }
+std::string PRINT(mal::Type::Ptr input) {
+  return pr_str(*input, true);
+}
 
 std::string rep(const std::string& input, mal::EnvFrame::WeakPtr env) {
   return PRINT(EVAL(READ(input), env));

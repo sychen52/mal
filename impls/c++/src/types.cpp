@@ -1,4 +1,5 @@
 #include "types.h"
+#include "reader.h"
 
 std::string mal::List::to_string() const {
   std::string ret = "(";
@@ -64,4 +65,22 @@ bool mal::List::operator==(const Type &rhs) const {
     }
   }
   return true;
+}
+
+std::string unescape(const std::string &s) {
+  for (size_t i=0; i < s.size(); ++i) {
+    auto find = Reader::unescape(s[i]);
+    if (find.has_value()) {
+      return s.substr(0, i) + find.value() +
+             unescape(s.substr(i + 1, s.size() - i - 1));
+    }
+  }
+  return s;
+}
+
+std::string mal::String::to_string(const bool readably) const {
+  if (readably) {
+    return "\"" + unescape(value_) + "\"";
+  }
+  return "\"" + value() + "\"";
 }
