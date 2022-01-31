@@ -1,4 +1,4 @@
-* Why I we need shared_ptr of mal::Type?
+* Why I need shared_ptr of mal::Type?
 ** Who needs to own mal::Type?
 - Environment: this is obvious.
 - List: should own its items
