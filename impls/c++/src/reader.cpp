@@ -5,7 +5,6 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include <iostream>
 
 std::string match_bracket(const std::string &s) {
   if (s == "(") {
@@ -150,7 +149,7 @@ mal::Type::Ptr read_str(const std::string &input) {
 }
 
 const std::array<std::pair<std::string, char>, 3> Reader::dictionary = {
-    {{"\\\n", '\n'}, {"\\\\", '\\'}, {"\\\"", '"'}}};
+    {{"\\n", '\n'}, {"\\\\", '\\'}, {"\\\"", '"'}}};
 
 std::optional<std::string> Reader::unescape(const char key) {
   for (const auto &pair : dictionary) {

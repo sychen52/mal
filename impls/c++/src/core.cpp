@@ -7,6 +7,7 @@
 #include <tuple>
 #include <utility>
 #include <fstream>
+#include <sstream>
 
 mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
 
@@ -162,23 +163,12 @@ Type::Ptr ReadString::apply(ParameterIter &it) {
 
 Type::Ptr Slurp::apply(ParameterIter &it) {
   auto filename = it.pop<String>();
-  std::cout << filename->to_string() << std::endl;
   it.no_extra();
   std::string content;
   std::ifstream file(filename->value());
-  if (file) {
-    std::streampos filesize = file.tellg();
-    std::cout << filesize << std::endl;
-    content.reserve(filesize);
-    file.seekg(0);
-    while (!file.eof()) {
-      content += file.get();
-    }
-  }
-  else {
-    throw mal::Exception("The file does not exist: " + filename->value());
-  }
-  return std::make_shared<mal::String>(content);
+  std::stringstream ret;
+  ret << file.rdbuf();
+  return std::make_shared<mal::String>(ret.str());
 }
 
 Type::Ptr Eval::apply(ParameterIter &it) {
