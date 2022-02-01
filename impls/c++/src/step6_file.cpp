@@ -1,4 +1,5 @@
 #include "env.h"
+#include "exception.h"
 #include "printer.h"
 #include "reader.h"
 #include "types.h"
@@ -95,6 +96,8 @@ int main() {
     try {
       auto output = rep(input, repl_env);
       std::cout << output << std::endl;
+    }
+    catch (const mal::SkipPrintingException &) {
     }
     catch (const mal::Exception &e) {
       std::cout << e.what() << std::endl;

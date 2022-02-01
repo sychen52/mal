@@ -68,7 +68,7 @@ mal::Type::Ptr Reader::read_form() {
     return read_list();
   }
   if (token.empty()) {
-    throw mal::ReaderException("");
+    throw mal::SkipPrintingException();
   }
   return read_atom();
 }
@@ -128,7 +128,13 @@ std::vector<std::string> tokenize(const std::string &input) {
     if (m.position() != 0) {
       throw mal::ReaderException("EOF invalid input: " + s);
     }
-    ret.emplace_back(m[1].str());
+    const auto& token = m[1].str();
+    if (token.size() >= 1 && token[0] == ';') {
+      //skip comments
+    }
+    else {
+      ret.emplace_back(token);
+    }
     s = m.suffix().str();
   }
   return ret;

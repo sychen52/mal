@@ -15,4 +15,8 @@ namespace mal {
     Exception("Read Error: " + message) {}
   };
 
+  class SkipPrintingException: public Exception {
+  public:
+  SkipPrintingException(): Exception("Skip Printing") {}
+  };
 }
