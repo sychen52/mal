@@ -1,5 +1,6 @@
 #include "types.h"
 #include "reader.h"
+#include <memory>
 
 std::string mal::List::to_string() const {
   std::string ret = "(";
@@ -83,4 +84,21 @@ std::string mal::String::to_string(const bool readably) const {
     return "\"" + unescape(value_) + "\"";
   }
   return "\"" + value() + "\"";
+}
+
+mal::List::Ptr mal::List::cons(const Type::Ptr &exp) {
+  auto ret = std::make_shared<List>();
+  ret->append(exp);
+  for (auto &item : *this) {
+    ret->append(item);
+  }
+  return ret;
+}
+
+mal::List::Ptr mal::List::concat(const List::Ptr &list) {
+  auto ret = std::make_shared<List>(*this);
+  for (auto &item : *list) {
+    ret->append(item);
+  }
+  return ret;
 }

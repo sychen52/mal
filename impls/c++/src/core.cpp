@@ -177,6 +177,20 @@ Type::Ptr Eval::apply(ParameterIter &it) {
   return EVAL(second, env_.lock());
 };
 
+Type::Ptr Cons::apply(ParameterIter &it) {
+  auto exp = it.pop();
+  auto list = it.pop<List>();
+  it.no_extra();
+  return list->cons(exp);
+}
+
+Type::Ptr Concat::apply(ParameterIter &it) {
+  auto list1 = it.pop<List>();
+  auto list2 = it.pop<List>();
+  it.no_extra();
+  return list1->concat(list2);
+}
+
 EnvFrame::Ptr build_env() {
   auto repl_env = std::make_shared<EnvFrame>();
   repl_env->add(std::make_shared<Add>());
@@ -197,6 +211,8 @@ EnvFrame::Ptr build_env() {
   repl_env->add(std::make_shared<ReadString>());
   repl_env->add(std::make_shared<Slurp>());
   repl_env->add(std::make_shared<Eval>(repl_env));
+  repl_env->add(std::make_shared<Cons>());
+  repl_env->add(std::make_shared<Concat>());
   return repl_env;
 }
 } // namespace mal

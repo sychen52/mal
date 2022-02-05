@@ -118,39 +118,17 @@ namespace mal {
     EnvFrame::WeakPtr env_;
   };
 
-  EnvFrame::Ptr build_env();
-  //
-  //  //template<class T=void>
-  //  //std::tuple<> get_arguments(const List::Iter &start, const List::Iter &end,
-  //  //                           const std::string &fn) {
-  //  //  if (start != end) {
-  //  //    throw Exception(fn + " has extra argument.");
-  //  //  }
-  //  //  return std::make_tuple();
-  //  //}
-  //
-  //  template<size_t n=0> // I cannot make it work without this size_t n=0;
-  //  // get_arguments<Ts...> is calling get_arguments<> when Ts is empty.
-  //  // However, I cannot define a template function get_arguments<>.
-  //  auto get_arguments(const List::Iter &start, const List::Iter &end,
-  //                             const std::string &fn) {
-  //    if (start != end) {
-  //      throw Exception(fn + " has extra argument.");
-  //    }
-  //    return std::make_tuple();
-  //  }
-  //
-  //  template<class T, class... Ts, size_t n=0>
-  //  auto get_arguments(const List::Iter &start, const List::Iter& end,
-  //                     const std::string& fn) {
-  //    if (start == end) {
-  //      throw Exception(fn + " has not enough number of arguments.");
-  //    }
-  //    T* t = dynamic_cast<T*>((*start).get());
-  //    if (t == nullptr) {
-  //      throw Exception("Wrong argument type for " + fn + ": " + typeid(T).name());
-  //    }
-  //    return std::tuple_cat(std::make_tuple(t), get_arguments<Ts...>(start+1, end, fn));
-  //  }
+  class Cons: public Applicable {
+  public:
+    Type::Ptr apply(ParameterIter &) override;
+    inline virtual std::string to_string() const override {return "cons";};
+  };
 
+  class Concat: public Applicable {
+  public:
+    Type::Ptr apply(ParameterIter &) override;
+    inline virtual std::string to_string() const override {return "concat";};
+  };
+
+  EnvFrame::Ptr build_env();
 } // namespace mal
