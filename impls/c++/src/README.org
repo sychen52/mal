@@ -46,6 +46,6 @@ In this method, eval is no longer a symbol in the env that can be copied to othe
 * atom in step6 is skipped for now
 
 * TODO implement mal::List with linked list
-- and the node should be shared_ptr
-- current implementation is std::vector. when doing cons and concat, all Type::Ptr needs to be copied. This is not terrible since Ptr is a shared_ptr, but it is not as ideal as liked list.
+- and the node should be shared_ptr, so that node can be shared by multiple List.
+- current implementation is std::vector. when doing cons and concat, all Type::Ptr needs to be copied. This is not terrible since Ptr is a shared_ptr, but it is not as ideal as linked list.
 
