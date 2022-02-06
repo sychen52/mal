@@ -11,6 +11,7 @@ mal::Type::Ptr eval(mal::ParameterIter &&it, mal::EnvFrame::WeakPtr env);
 /**
  * This series of class does not take ownership of env or ast
  */
+namespace mal {
 class SpecialForm {
 public:
   SpecialForm() = default;
@@ -83,5 +84,15 @@ private:
   mal::Type::Ptr ast_;
 };
 
+class QuasiQuote : public SpecialForm {
+public:
+  QuasiQuote(const mal::List &list, mal::EnvFrame::WeakPtr env);
+  virtual mal::Type::Ptr operator()() override;
+
+private:
+  mal::Type::Ptr ast_;
+};
+
 std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
                                                 mal::EnvFrame::WeakPtr env);
+}

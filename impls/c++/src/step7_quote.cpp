@@ -57,7 +57,7 @@ mal::Type::Ptr EVAL(const mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
     return ast;
   }
 
-  auto special_form = build_special_form(*list_ptr, env);
+  auto special_form = mal::build_special_form(*list_ptr, env);
   if (special_form) {
     return (*special_form)();
   }
