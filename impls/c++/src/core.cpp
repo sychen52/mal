@@ -185,10 +185,11 @@ Type::Ptr Cons::apply(ParameterIter &it) {
 }
 
 Type::Ptr Concat::apply(ParameterIter &it) {
-  auto list1 = it.pop<List>();
-  auto list2 = it.pop<List>();
-  it.no_extra();
-  return list1->concat(list2);
+  auto ret = std::make_shared<List>();
+  while (!it.is_done()) {
+    ret->insert(it.pop<List>());
+  }
+  return ret;
 }
 
 EnvFrame::Ptr build_env() {

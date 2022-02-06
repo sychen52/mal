@@ -95,10 +95,6 @@ mal::List::Ptr mal::List::cons(const Type::Ptr &exp) {
   return ret;
 }
 
-mal::List::Ptr mal::List::concat(const List::Ptr &list) {
-  auto ret = std::make_shared<List>(*this);
-  for (auto &item : *list) {
-    ret->append(item);
-  }
-  return ret;
+void mal::List::insert(const List::Ptr &list) {
+  value_.insert(value_.end(), list->begin(), list->end());
 }

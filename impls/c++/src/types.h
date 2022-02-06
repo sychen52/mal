@@ -75,7 +75,7 @@ namespace mal {
     using Iter = std::vector<Type::Ptr>::const_iterator;
     inline void append(const Type::Ptr& exp) { value_.emplace_back(exp); }
     List::Ptr cons(const Type::Ptr &exp);
-    List::Ptr concat(const List::Ptr &list);
+    void insert(const List::Ptr &list);
     virtual std::string to_string() const override;
     inline auto empty() const { return value_.empty(); }
     inline auto size() const { return value_.size(); }

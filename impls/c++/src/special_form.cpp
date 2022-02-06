@@ -101,6 +101,17 @@ FnStar::FnStar(const mal::List &list, mal::EnvFrame::WeakPtr env)
 mal::Type::Ptr FnStar::operator()() {
   return std::make_shared<mal::Procedure>(parameters_, body_, env_.lock());
 }
+
+Quote::Quote(const mal::List &list) {
+  auto it = list.parameter_iter();
+  ast_ = it.pop();
+  it.no_extra();
+}
+
+mal::Type::Ptr Quote::operator()() {
+  return ast_;
+}
+
 std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
                                                 mal::EnvFrame::WeakPtr env) {
   // def!
@@ -122,6 +133,10 @@ std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
   // fn*
   if (is_form(list, "fn*")) {
     return std::make_unique<FnStar>(list, env);
+  }
+  // quote
+  if (is_form(list, "quote")) {
+    return std::make_unique<Quote>(list);
   }
   return nullptr;
 }

@@ -13,6 +13,7 @@ mal::Type::Ptr eval(mal::ParameterIter &&it, mal::EnvFrame::WeakPtr env);
  */
 class SpecialForm {
 public:
+  SpecialForm() = default;
   SpecialForm(mal::EnvFrame::WeakPtr env) : env_(env) {}
   virtual mal::Type::Ptr operator()() = 0;
   /**
@@ -71,6 +72,15 @@ public:
 private:
   mal::List::Ptr parameters_;
   mal::Type::Ptr body_;
+};
+
+class Quote : public SpecialForm {
+public:
+  Quote(const mal::List &list);
+  virtual mal::Type::Ptr operator()() override;
+
+private:
+  mal::Type::Ptr ast_;
 };
 
 std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
