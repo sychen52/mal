@@ -136,18 +136,12 @@ mal::Type::Ptr quasiquote(const mal::Type::Ptr& ast) {
           throw mal::Exception("splice-unquote can only take 1 element, given " +
                                std::to_string(elt_list->size() - 1));
         }
-        auto new_ret = std::make_shared<mal::List>();
-        new_ret->append(std::make_shared<mal::Symbol>("concat"));
-        new_ret->append((*elt_list)[1]);
-        new_ret->append(ret);
-        ret = new_ret;
+        ret = std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+            std::make_shared<mal::Symbol>("concat"), (*elt_list)[1], ret});
       }
       else {
-        auto new_ret = std::make_shared<mal::List>();
-        new_ret->append(std::make_shared<mal::Symbol>("cons"));
-        new_ret->append(quasiquote(elt));
-        new_ret->append(ret);
-        ret = new_ret;
+        ret = std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+            std::make_shared<mal::Symbol>("cons"), quasiquote(elt), ret});
       }
     }
     return ret;
@@ -156,10 +150,8 @@ mal::Type::Ptr quasiquote(const mal::Type::Ptr& ast) {
   // map is skipped for now
   auto symbol = dynamic_cast<mal::Symbol*>(ast.get());
   if (symbol != nullptr) {
-    auto ret = std::make_shared<mal::List>();
-    ret->append(std::make_shared<mal::Symbol>("quote"));
-    ret->append(ast);
-    return ret;
+    return std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+        std::make_shared<mal::Symbol>("quote"), ast});
   }
   // default
   return ast;

@@ -73,7 +73,10 @@ namespace mal {
   public:
     using Ptr = std::shared_ptr<List>;
     using Iter = std::vector<Type::Ptr>::const_iterator;
-    inline void append(const Type::Ptr& exp) { value_.emplace_back(exp); }
+    List() = default;
+    List(const std::vector<Type::Ptr> &value)
+        : TypeTemplate<std::vector<Type::Ptr>>(value) {}
+    inline void append(const Type::Ptr &exp) { value_.emplace_back(exp); }
     List::Ptr cons(const Type::Ptr &exp);
     void insert(const List::Ptr &list);
     virtual std::string to_string() const override;
