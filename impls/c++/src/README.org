@@ -43,6 +43,17 @@ In this method, eval is no longer a symbol in the env that can be copied to othe
 - No more circular ownership; however, I really don't like the global variable 
 ** Use weakptr to break the cycle.
 
+
+* Macro
+** macro vs function
+macro is actually a function, the difference is:
+- marco is expanded at the very beginning EVAL, which means the macro's function arguments are not EVALed yet.
+- you can choose not to EVAL the macro function arguments. This is why marco is call user-defined special form.
+** quote the special form symbol
+if you want your macro to be expanded to a special form, you need to quote the special form symbol. The reason is:
+- Since macro is a function. When it is expanded, the function is applied. inside apply, EVAL will be called.
+- So, if you use special form without quote in the macro function body, it will be EVALed.
+
 * atom in step6 is skipped for now
 
 * TODO implement mal::List with linked list

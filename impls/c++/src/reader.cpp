@@ -67,6 +67,26 @@ mal::Type::Ptr Reader::read_form() {
   if (token == "(" || token == "[") {
     return read_list();
   }
+  if (token == "'") {
+    next();
+    return std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+        std::make_shared<mal::Symbol>("quote"), read_form()});
+  }
+  if (token == "`") {
+    next();
+    return std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+        std::make_shared<mal::Symbol>("quasiquote"), read_form()});
+  }
+  if (token == "~") {
+    next();
+    return std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+        std::make_shared<mal::Symbol>("unquote"), read_form()});
+  }
+  if (token == "~@") {
+    next();
+    return std::make_shared<mal::List>(std::vector<mal::Type::Ptr>{
+        std::make_shared<mal::Symbol>("splice-unquote"), read_form()});
+  }
   if (token.empty()) {
     throw mal::SkipPrintingException();
   }
