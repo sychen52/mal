@@ -1,0 +1,3 @@
+* atom in step6 is skipped for now
+* map in step7 are skipped
+* str implementation in step7 is not correct, see step4 deferrable.
