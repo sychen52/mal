@@ -142,5 +142,9 @@ namespace mal {
       throw mal::Exception("Callable cannot be compared");
       return false;
     }
+    inline bool is_macro() const { return is_macro_ ; }
+    inline void set_macro(bool b) { is_macro_ = b ; }
+  protected:
+    bool is_macro_ = false;
   };
 } // namespace mal

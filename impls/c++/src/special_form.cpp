@@ -1,4 +1,5 @@
 #include "special_form.h"
+#include "env.h"
 #include "exception.h"
 #include "procedure.h"
 #include "types.h"
@@ -169,8 +170,69 @@ mal::Type::Ptr mal::QuasiQuote::operator()() {
   return EVAL(quasiquote(ast_), env_);
 }
 
+mal::DefMacroBang::DefMacroBang(const mal::List &list, mal::EnvFrame::WeakPtr env)
+    : SpecialForm(env) {
+  auto it = list.parameter_iter();
+  symbol_ = it.pop<mal::Symbol>();
+  ast_ = it.pop();
+  it.no_extra();
+}
+
+mal::Type::Ptr mal::DefMacroBang::operator()() {
+  auto ret = EVAL(ast_, env_);
+  auto applicable = dynamic_cast<mal::Applicable*>(ret.get());
+  if (applicable) {
+    applicable->set_macro(true);
+  }
+  env_.lock()->set(*symbol_, ret);
+  return ret;
+}
+
+std::optional<std::tuple<mal::List*,mal::Applicable*>> is_macro_call(mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
+  auto list = dynamic_cast<mal::List*>(ast.get());
+  if (!list || list->empty()) {
+    return {};
+  }
+  auto symbol = dynamic_cast<mal::Symbol*>((*list)[0].get());
+  if (!symbol) {
+    return {};
+  }
+  auto lookup = env.lock()->get(*symbol);
+  if (!lookup) {
+    return {};
+  }
+  auto applicable = dynamic_cast<mal::Applicable*>(lookup.get());
+  if (!applicable) {
+    return {};
+  }
+  if (!applicable->is_macro()) {
+    return {};
+  }
+  return std::make_tuple(list, applicable);
+}
+
+mal::Type::Ptr macroexpand(mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env) {
+  auto res = is_macro_call(ast, env);
+  if (res.has_value()) {
+    auto [list, applicable] = res.value();
+    return macroexpand(applicable->apply(list->parameter_iter()), env);
+  }
+  return ast;
+}
+
+mal::MacroExpand::MacroExpand(const mal::List &list, mal::EnvFrame::WeakPtr env)
+    : SpecialForm(env) {
+  auto it = list.parameter_iter();
+  ast_ = it.pop();
+  it.no_extra();
+}
+
+mal::Type::Ptr mal::MacroExpand::operator()() {
+  return macroexpand(ast_, env_);
+}
+
 std::unique_ptr<mal::SpecialForm>
-mal::build_special_form(const mal::List &list, mal::EnvFrame::WeakPtr env) {
+build_special_form(const mal::List &list, mal::EnvFrame::WeakPtr env) {
   // def!
   if (is_form(list, "def!")) {
     return std::make_unique<mal::DefBang>(list, env);
@@ -198,6 +260,14 @@ mal::build_special_form(const mal::List &list, mal::EnvFrame::WeakPtr env) {
   // quasiquote
   if (is_form(list, "quasiquote")) {
     return std::make_unique<mal::QuasiQuote>(list, env);
+  }
+  // defmacro!
+  if (is_form(list, "defmacro!")) {
+    return std::make_unique<mal::DefMacroBang>(list, env);
+  }
+  // macroexpand
+  if (is_form(list, "macroexpand")) {
+    return std::make_unique<mal::MacroExpand>(list, env);
   }
   return nullptr;
 }

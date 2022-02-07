@@ -93,6 +93,26 @@ private:
   mal::Type::Ptr ast_;
 };
 
-std::unique_ptr<SpecialForm> build_special_form(const mal::List &list,
-                                                mal::EnvFrame::WeakPtr env);
+class DefMacroBang : public SpecialForm {
+public:
+  DefMacroBang(const mal::List &list, mal::EnvFrame::WeakPtr env);
+  virtual mal::Type::Ptr operator()() override;
+
+private:
+  mal::Symbol::Ptr symbol_;
+  mal::Type::Ptr ast_;
+};
+
+class MacroExpand : public SpecialForm {
+public:
+  MacroExpand(const mal::List &list, mal::EnvFrame::WeakPtr env);
+  virtual mal::Type::Ptr operator()() override;
+
+private:
+  mal::Type::Ptr ast_;
+};
 }
+
+mal::Type::Ptr macroexpand(mal::Type::Ptr ast, mal::EnvFrame::WeakPtr env);
+std::unique_ptr<mal::SpecialForm> build_special_form(const mal::List &list,
+                                                mal::EnvFrame::WeakPtr env);
